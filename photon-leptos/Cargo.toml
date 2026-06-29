@@ -1,0 +1,40 @@
+[package]
+name = "photon-leptos"
+version = "0.1.0"
+edition = "2021"
+description = "Leptos integration for Photon events — synced resources and WebSocket real-time updates"
+license = "MIT"
+repository = "https://github.com/deathbreakfast/photon-leptos"
+
+[dependencies]
+leptos = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+cfg-if = { workspace = true }
+log = { workspace = true }
+futures = { workspace = true }
+
+leptos-use = { workspace = true, optional = true, features = ["use_websocket"] }
+codee = { workspace = true, optional = true }
+
+photon = { workspace = true, optional = true }
+photon-axum = { path = "../photon-axum", optional = true }
+tokio = { workspace = true, optional = true }
+quark = { workspace = true, optional = true }
+
+[features]
+default = []
+hydrate = ["leptos/hydrate", "dep:leptos-use", "dep:codee"]
+ssr = [
+    "leptos/ssr",
+    "dep:photon",
+    "dep:photon-axum",
+    "photon/ssr",
+    "photon-axum/ssr",
+    "dep:tokio",
+    "dep:quark",
+]
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }

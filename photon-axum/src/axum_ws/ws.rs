@@ -1,0 +1,96 @@
+//! WebSocket endpoint that subscribes to Photon and forwards events to clients.
+
+use std::sync::Arc;
+
+use axum::extract::ws::{WebSocket, WebSocketUpgrade};
+use futures::{SinkExt, StreamExt};
+
+use photon_backend::instrumentation::log_ops;
+use photon_runtime::Photon;
+
+/// Configuration for a WebSocket endpoint that forwards Photon events.
+#[derive(Clone, Debug)]
+pub struct SyncedWsConfig {
+    /// Photon topic name (e.g. `"user.notifications"`).
+    pub topic: String,
+
+    /// Optional key filter (e.g. user_id) for scoping events to a specific key.
+    pub key_filter: Option<String>,
+
+    /// Optional subscription name for ephemeral subscriptions.
+    pub subscription_name: Option<String>,
+}
+
+/// Returns an Axum handler for the given WebSocket config.
+pub async fn synced_ws_handler(
+    ws: WebSocketUpgrade,
+    photon: Arc<Photon>,
+    config: SyncedWsConfig,
+) -> axum::response::Response {
+    ws.on_upgrade(move |socket| handle_socket(socket, photon, config))
+}
+
+async fn handle_socket(mut socket: WebSocket, photon: Arc<Photon>, config: SyncedWsConfig) {
+    let key_filter = config.key_filter.clone();
+    let topic = config.topic.clone();
+
+    log_ops("axum_ws", "connect", "client connected", &topic, "", "");
+
+    let mut stream = photon.subscribe(&topic, key_filter.as_deref(), None);
+
+    while let Some(ev) = stream.next().await {
+        match ev {
+            Ok(event) => match serde_json::to_string(&event) {
+                Ok(json) => {
+                    if socket
+                        .send(axum::extract::ws::Message::Text(json.into()))
+                        .await
+                        .is_err()
+                    {
+                        log_ops(
+                            "axum_ws",
+                            "disconnect",
+                            "send failed (client gone)",
+                            &topic,
+                            "",
+                            "",
+                        );
+                        break;
+                    }
+                }
+                Err(e) => {
+                    log_ops(
+                        "axum_ws",
+                        "serialize_error",
+                        "failed to serialize event for ws",
+                        &topic,
+                        "",
+                        &e.to_string(),
+                    );
+                }
+            },
+            Err(e) => {
+                log_ops(
+                    "axum_ws",
+                    "subscription_error",
+                    "photon subscription error",
+                    &topic,
+                    "",
+                    &e.to_string(),
+                );
+                break;
+            }
+        }
+    }
+
+    log_ops(
+        "axum_ws",
+        "disconnect",
+        "client disconnected",
+        &topic,
+        "",
+        "",
+    );
+
+    let _ = SinkExt::close(&mut socket).await;
+}

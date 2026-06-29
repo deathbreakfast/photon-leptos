@@ -1,0 +1,20 @@
+[package]
+name = "photon-axum"
+version = "0.1.0"
+edition = "2021"
+description = "Axum WebSocket integration for Photon browser clients"
+license = "MIT"
+repository = "https://github.com/deathbreakfast/photon-leptos"
+
+[dependencies]
+photon-runtime = { workspace = true }
+photon-backend = { workspace = true }
+quark = { workspace = true }
+axum = { workspace = true }
+futures = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true, optional = true }
+
+[features]
+default = []
+ssr = ["photon-runtime/ssr", "photon-backend/ssr", "dep:tokio"]
