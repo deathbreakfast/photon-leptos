@@ -4,6 +4,7 @@ members = [
     "photon-axum",
     "photon-leptos",
     "photon-leptos-macros",
+    "photon-leptos-bench",
     "e2e/demo",
 ]
 
