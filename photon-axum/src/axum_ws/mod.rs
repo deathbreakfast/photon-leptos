@@ -1,7 +1,5 @@
 //! Axum WebSocket integration modules for Photon realtime routes.
 //!
-//! **Audience:** host integrators.
-//!
 //! | Submodule | Purpose |
 //! |-----------|---------|
 //! | auth (private) | [`PhotonUserExtractor`], [`HeadlessWsAuth`] |

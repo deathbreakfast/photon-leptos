@@ -4,77 +4,65 @@
 
 [GitHub](https://github.com/deathbreakfast/photon-leptos) · [photon](https://github.com/deathbreakfast/photon) · `cargo doc -p photon-leptos --features ssr,hydrate --open`
 
-Leptos + Axum WebSocket integration for **browser clients** consuming [Photon](https://github.com/deathbreakfast/photon) topics. This repo is Zone C — product integration built on the core pub/sub library, not a replacement for it.
+Leptos + Axum integration built on [photon](https://github.com/deathbreakfast/photon) — browser clients subscribe to topics over WebSockets and refetch synced server functions when events arrive.
 
 ```rust
 use leptos::prelude::*;
-use photon::{configure, topic, EmbeddedBackend, Photon, TransportStore};
+use photon::{topic, /* ... */};
 use photon_leptos::synced;
 
-// 1. Topic (Zone A — photon crate)
-#[topic(name = "counter.updated")]
-pub struct CounterUpdated {
-    pub new_value: u64,
-}
+#[topic(name = "notifications.updated")]
+pub struct NotificationUpdated { /* ... */ }
 
-// 2. Server fn + macro (Zone C)
 #[synced(
-    topic = "counter.updated",
-    ws = "/ws/counter",
+    topic = "notifications.updated",
+    ws = "/ws/notifications",
     strategy = "refetch",
     auth = "none",
 )]
-pub async fn counter_get() -> Result<CounterResponse, ServerFnError> {
-    Ok(CounterResponse { value: load_count().await? })
+pub async fn list_notifications() -> Result<Vec<Notification>, ServerFnError> { /* ... */ }
+
+// Somewhere else on the server — not the viewing client's click:
+async fn on_import_job_finished(...) {
+    NotificationUpdated { /* ... */ }.publish().await?;
 }
 
-pub async fn counter_increment() -> Result<(), ServerFnError> {
-    let new_value = mutate_and_save().await?;
-    CounterUpdated { new_value }.publish().await?;
-    Ok(())
-}
-
-// 3. Client — generated subscribe_counter_get bumps a trigger on each WS event
-#[component]
-fn LiveCounter() -> impl IntoView {
-    let trigger = subscribe_counter_get(|| {});
-    let count = Resource::new(move || trigger.get(), move |_| counter_get());
-    view! { <p>{move || count.get().and_then(|r| r.ok()).map(|c| c.value)}</p> }
-}
-
-// 4. Host wiring (integrator — once at boot)
-// app = photon_axum::ws_router::<AppState, HeadlessWsAuth>(app);
+// In the Leptos page (any number of viewers):
+let trigger = subscribe_list_notifications(|| {});
+let items = Resource::new(move || trigger.get(), move |_| list_notifications());
 ```
+
+Publish can come from any server path (background job, webhook handler, another user's write)—subscribers only need the topic and synced read fn.
 
 ## About photon-leptos
 
-photon-leptos bridges Photon pub/sub events to Leptos UIs over WebSockets. You define topics and publish from server functions with **photon**; you annotate read server functions with **`#[photon_leptos::synced]`** to get client subscription helpers and automatic WS route registration; you merge **`photon_axum::ws_router`** once at host boot.
+photon-leptos bridges Photon pub/sub events to Leptos UIs over WebSockets. You define topics and publish from server code with **photon**; you annotate read server functions with **`#[photon_leptos::synced]`** to get client subscription helpers and automatic WS route registration; you merge **`photon_axum::ws_router`** once at host boot.
 
-Core **photon** deliberately has no browser client wiring — `#[photon::synced]` compile-errors there by design.
+`#[photon::topic]` and `#[photon::subscribe]` live in the **photon** crate. Core **photon** deliberately has no browser client wiring — `#[photon::synced]` compile-errors there by design.
 
 ## The model
 
 ```mermaid
 sequenceDiagram
-    participant UI as LeptosComponent
-    participant SF as counter_increment
+    participant Job as BackgroundJob
     participant Photon as PhotonRuntime
-    participant WS as ws_counter
-    participant Sub as subscribe_counter_get
+    participant WS as ws_endpoint
+    participant Sub as subscribe_helper
     participant Res as Resource
+    participant UI as PageView
 
-    UI->>SF: user clicks increment
-    SF->>Photon: CounterUpdated.publish
+    Job->>Photon: NotificationUpdated.publish
     Photon->>WS: stream event
-    WS->>Sub: WebSocket JSON envelope
-    Sub->>Sub: trigger += 1
-    Sub->>Res: source changed
-    Res->>SF: counter_get refetch
-    Res->>UI: updated count
+    WS->>Sub: WebSocket envelope
+    Sub->>Sub: trigger bump
+    Sub->>Res: refetch synced read fn
+    Res->>UI: updated view
 ```
 
+Client-initiated writes can also publish the same topic; the diagram highlights the decoupled case where the event source is unrelated to the viewing client.
+
 - **Topic** — typed event on a named stream (`#[photon::topic]` in the photon crate)
-- **Publish** — server function mutates state, then `.publish()` after commit
+- **Publish** — any server path mutates state, then `.publish()` after commit
 - **Synced read** — `#[photon_leptos::synced]` generates `subscribe_<fn>` + WS inventory entry
 - **Client refetch** — trigger signal wired into a Leptos `Resource`
 - **Host** — `ws_router` discovers inventory routes and mounts Axum WS handlers
@@ -84,18 +72,15 @@ sequenceDiagram
 | Crate | Role | Docs |
 |-------|------|------|
 | `photon-leptos` | Client hooks, `synced` re-export, server re-exports | `cargo doc -p photon-leptos --features ssr,hydrate --open` |
-| `photon-axum` | Axum WS routes, quark auto-discovery, `synced_ws_handler` | `cargo doc -p photon-axum --features ssr --open` |
+| `photon-axum` | Axum WS routes, inventory auto-discovery, `synced_ws_handler` | `cargo doc -p photon-axum --features ssr --open` |
 | `photon-leptos-macros` | Proc macro `#[photon_leptos::synced]` | `cargo doc -p photon-leptos-macros --open` |
 
-Zone A keeps `#[photon::topic]` and `#[photon::subscribe]`.
+## Documentation
 
-## Who reads what
-
-| Audience | Start here |
-|----------|------------|
-| App author (topics + UI) | Hero above · [`synced`](photon-leptos-macros/src/lib.rs) · `subscribe_*` hooks |
-| Host integrator (Axum boot) | [`photon-axum/README.md`](photon-axum/README.md) · `ws_router` · `HasPhoton` |
-| Maintainer | [`photon-leptos/DESIGN.md`](photon-leptos/DESIGN.md) · [`.sentrux/rules.toml`](.sentrux/rules.toml) |
+- **Architecture and API** — `cargo doc -p photon-leptos --features ssr,hydrate --open` (primary reference)
+- **Axum boot** — [`photon-axum/README.md`](photon-axum/README.md) · `ws_router` · `HasPhoton` on your app state
+- **Macro reference** — `cargo doc -p photon-leptos-macros --open`
+- **Roadmap** — [`ROADMAP.md`](ROADMAP.md)
 
 ## Getting started
 
@@ -130,13 +115,13 @@ Photon boot (Continuum + `PhotonBuilder`) lives in the [photon README](https://g
 
 ## Compared to core photon
 
-**photon** is a headless pub/sub library — no Leptos, no Axum WS, no browser clients. **photon-leptos** is the integration layer for realtime UI. The Unified Field template's counter-app is a full product example; template migration to this repo is deferred (see `WEB_APP_TEMPLATE_MIGRATION.md` in the photon repo).
+**photon** is a headless pub/sub library — no Leptos, no Axum WS, no browser clients. **photon-leptos** is the integration layer for realtime UI.
 
 ## FAQ
 
-**Why does `#[photon::synced]` fail to compile?** Zone A intentionally compile-errors that macro. Use `#[photon_leptos::synced]` from this repo (re-exported as `photon_leptos::synced`).
+**Why does `#[photon::synced]` fail to compile?** The **photon** crate compile-errors that macro by design. Use `#[photon_leptos::synced]` from this repo (re-exported as `photon_leptos::synced`).
 
-**How does `auth = "user"` work?** The macro registers a user-scoped route. Your host passes a concrete auth type at `ws_router::<AppState, YourAuth>` that implements `PhotonUserExtractor` and `FromRequestParts<S>` — not hardcoded to any product auth crate.
+**How does `auth = "user"` work?** The macro registers a user-scoped route. Your host passes a concrete auth type at `ws_router::<AppState, YourAuth>` that implements `PhotonUserExtractor` and `FromRequestParts<S>`.
 
 **Why is my WS route missing?** Both conditions are required: (1) a crate linked into the binary uses `#[photon_leptos::synced]` (inventory submit), and (2) boot calls `photon_axum::ws_router` (or `photon_leptos::server::ws_router`).
 
@@ -144,7 +129,7 @@ Photon boot (Continuum + `PhotonBuilder`) lives in the [photon README](https://g
 
 ## E2E (planned)
 
-Browser integration tests are specified in [e2e/README.md](e2e/README.md). Implementation tracked separately — not part of the Zone C library crate surface.
+A self-contained counter demo for browser tests is specified in [e2e/README.md](e2e/README.md). It is not part of the library crate API — see [`ROADMAP.md`](ROADMAP.md) for implementation status.
 
 ## Verify
 

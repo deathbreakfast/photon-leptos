@@ -1,8 +1,6 @@
 //! # photon-axum — Axum WebSocket registration for Photon browser clients
 //!
-//! **Audience:** host integrators wiring SSR Axum servers.
-//!
-//! This crate bridges Photon topic streams to browser WebSockets. Routes annotated with
+//! Bridges Photon topic streams to browser WebSockets. Routes annotated with
 //! [`photon_leptos::synced`](https://docs.rs/photon_leptos_macros) submit [`WsRouteDescriptor`]
 //! entries via inventory; [`ws_router`] discovers them at boot and mounts GET handlers.
 //!
@@ -18,7 +16,7 @@
 //! let app = ws_router::<AppState, HeadlessWsAuth>(router);
 //! ```
 //!
-//! **App authors** should use [`photon_leptos`](https://docs.rs/photon_leptos) for client hooks.
+//! For client hooks and synced resources, use [`photon_leptos`](https://docs.rs/photon_leptos).
 //! Typed topic streams can also be bridged manually via `photon::Photon::subscribe` and
 //! [`synced_ws_handler`].
 //!

@@ -1,72 +1,101 @@
 # photon-leptos E2E (planned)
 
-**Status:** specification only — no demo app or Playwright harness yet.
+**Status:** specification only — the demo app, trigger route, and Playwright harness do **not** exist yet. Implementation is tracked in [`ROADMAP.md`](../ROADMAP.md).
 
 ## Goal
 
-Prove **publish → WebSocket → Leptos refetch** without the full web-app-template stack. This validates the Zone C integration path in isolation.
+Prove **publish → WebSocket → Leptos refetch** with a self-contained demo under this directory. No external app repos or templates required.
 
-## Future layout
+## Layout (future)
 
 ```
 e2e/
-  README.md                 # this spec
-  photon-leptos-demo/         # TODO — minimal cargo-leptos app
-  end2end/                    # TODO — Playwright specs
+  README.md       # this spec
+  demo/           # minimal Leptos + Axum app (workspace member when added)
+  tests/          # Playwright specs
 ```
 
-## Minimal demo app (`photon-leptos-demo`, future)
+All demo code — synced read fns, topic, WS routes, and the increment trigger route — lives under `e2e/demo/`. Nothing in `photon-leptos`, `photon-axum`, or `photon-leptos-macros` gains test-only routes.
+
+## Why counter here (not in the public README)
+
+| Concern | README / rustdoc | E2E (`e2e/demo/`) |
+|---------|------------------|-------------------|
+| Teach the library | Generic domain, server-job publish | Minimal toy domain |
+| Prove behavior in CI | Unit/integration tests | Browser: read value → HTTP trigger → WS → UI update |
+| Trigger | Decoupled (job, webhook, etc.) | Test-only Axum route in the demo app — not on the Leptos page |
+
+## UI: one value, no CSS
+
+The Leptos page is a single synced read surface — nothing to click:
+
+| Element | Role | Suggested hook |
+|---------|------|----------------|
+| Counter display | Shows current value from synced `Resource` | `data-testid="counter-value"` or `#counter-value` (e.g. `<span>`) |
+
+- **No CSS** — no stylesheets, no component library, no layout chrome.
+- **One visible value** on the page; no buttons, forms, or nav in v1.
+
+## Demo server (future `e2e/demo/`)
 
 | Piece | Description |
 |-------|-------------|
 | Photon boot | Headless mem backend — same pattern as [photon Getting started](https://github.com/deathbreakfast/photon#getting-started) |
 | App state | `HasPhoton` + `Arc<Photon>` on Axum state |
 | Router | `photon_axum::ws_router::<AppState, HeadlessWsAuth>(app)` |
-| UI | Single Leptos page: counter display + increment button |
 | Topic | `#[photon::topic(name = "counter.updated")]` on `CounterUpdated` |
 | Read fn | `counter_get` with `#[photon_leptos::synced(topic = "counter.updated", ws = "/ws/counter", auth = "none")]` |
-| Write fn | `counter_increment` mutates in-memory counter, then `CounterUpdated.publish().await?` |
 | Client | `subscribe_counter_get(|| {})` + `Resource::new` refetching `counter_get` |
+| Publish trigger | Plain Axum handler in the demo router (e.g. `POST /api/counter/increment`) — mutates shared in-memory state and calls `CounterUpdated.publish()`. Playwright calls it via `request.post(...)`; the page never invokes it. |
+
+No `cfg` / Cargo feature required: the trigger route is demo-app code under `e2e/` and is never shipped with the library crates.
 
 ```mermaid
 sequenceDiagram
-    participant Browser
-    participant ServerFn as counter_increment
-    participant Photon
+    participant PW as Playwright
+    participant API as increment_route
+    participant Photon as PhotonRuntime
     participant WS as ws_counter
-    participant UI as Resource_refetch
+    participant Sub as subscribe_counter_get
+    participant UI as counter_value_span
 
-    Browser->>ServerFn: click increment
-    ServerFn->>Photon: CounterUpdated.publish
+    PW->>UI: read baseline 0
+    PW->>API: POST increment
+    API->>Photon: CounterUpdated.publish
     Photon->>WS: stream event
-    WS->>Browser: WebSocket JSON
-    Browser->>UI: trigger bump
-    UI->>ServerFn: counter_get refetch
+    WS->>Sub: WebSocket envelope
+    Sub->>Sub: trigger bump
+    Sub->>UI: Resource refetch
+    PW->>UI: read value 1
 ```
 
 ## Happy-path E2E (Playwright, future)
 
-1. Load page — initial count visible (SSR and after hydrate)
-2. Click increment — count updates without full page reload
-3. Optional: assert WebSocket connection via test-only status element or network hook
+1. Open page; read baseline from `#counter-value` (expect `0`).
+2. `POST` the demo increment route (path TBD when demo is implemented).
+3. Short wait; WebSocket → trigger bump → Resource refetch.
+4. Read `#counter-value` again (expect `1`).
+5. Optional: second browser tab updates without calling the route again.
 
-## Sad-path E2E (future — required)
+Run via `cargo leptos end-to-end` once the demo exists (benchmark + E2E only — not a default dev or release surface).
+
+## Sad-path E2E (future)
 
 | Scenario | Setup | Expected client behavior |
 |----------|-------|--------------------------|
 | Server fn error | `counter_get` returns `Err` | UI shows error state; no panic; `Resource` exposes failure |
-| Publish failure | inject failing publish in `counter_increment` | increment shows error; count unchanged |
-| WS unavailable | omit `ws_router` or block `/ws/counter` | trigger stays 0; initial SSR value remains; optional offline indicator |
+| Publish failure | inject failing publish in increment handler | count unchanged |
+| WS unavailable | omit `ws_router` or block `/ws/counter` | trigger stays 0; initial SSR value remains |
 | WS disconnect mid-session | force-close socket after connect | client reconnect/backoff; count recovers on next publish |
 | Auth=user mismatch | `HeadlessWsAuth` on route registered with `auth = "user"` | client receives no events when publish uses keyed partition |
 
 ## CI integration (future)
 
-- New workflow job `e2e`, initially `workflow_dispatch` only (lean PR CI — see Orbital pattern)
+- New workflow job `e2e`, initially `workflow_dispatch` only
 - Checkout sibling `photon` repo (same as library CI)
-- Run `cargo leptos end-to-end` against `photon-leptos-demo` once it exists
-- Playwright under `e2e/end2end/` mirroring Orbital `end2end/tests/`
+- Run `cargo leptos end-to-end` against `e2e/demo/` once it exists
+- Playwright under `e2e/tests/`
 
 ## Out of scope for library crates
 
-The demo app and browser tests are **not** part of `photon-leptos`, `photon-axum`, or `photon-leptos-macros` public API. Keep them in this `e2e/` tree when implemented.
+The demo app and browser tests are **not** part of `photon-leptos`, `photon-axum`, or `photon-leptos-macros` public API. Keep them in this `e2e/` tree.

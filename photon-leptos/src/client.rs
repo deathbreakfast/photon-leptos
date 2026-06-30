@@ -1,6 +1,15 @@
 //! Client-side synced resources and WebSocket lifecycle.
 //!
-//! **Audience:** app authors building Leptos UI components.
+//! Helpers for Leptos components that subscribe to Photon topics over WebSocket and
+//! keep [`Resource`] data fresh when events arrive.
+//!
+//! ## Choosing a sync strategy
+//!
+//! | Strategy | When to use |
+//! |---------|-------------|
+//! | [`SyncStrategy::Refetch`](crate::SyncStrategy::Refetch) | Server owns query logic (lists, joins, auth-scoped reads) |
+//! | [`SyncStrategy::Replace`](crate::SyncStrategy::Replace) | WS payload is the full new value (scalars, simple structs) |
+//! | [`SyncStrategy::Append`](crate::SyncStrategy::Append) | Feed-style lists — use [`synced_resource_append`] |
 //!
 //! ## API tiers
 //!
@@ -10,8 +19,32 @@
 //! | 1 | [`use_topic_subscription`] | Multiple resources/effects on one WS path |
 //! | 0 | [`subscribe_ws`] | Custom callback handling of raw payloads |
 //!
+//! ### Helper example (without macro)
+//!
+//! ```rust,ignore
+//! use photon_leptos::{synced_resource, SyncStrategy, SyncedResourceOpts};
+//!
+//! pub fn use_notifications() -> Resource<Result<Vec<Notification>, ServerFnError>> {
+//!     synced_resource(
+//!         list_notifications,
+//!         SyncedResourceOpts {
+//!             topic: "notifications.updated".into(),
+//!             ws_path: "/ws/notifications".into(),
+//!             strategy: SyncStrategy::Refetch,
+//!             key_filter: None,
+//!         },
+//!     )
+//! }
+//! ```
+//!
 //! On SSR-only builds, WebSocket calls compile out; triggers stay at 0 and initial
 //! values come from server-rendered [`Resource`] fetches.
+//!
+//! ## WebSocket client contract
+//!
+//! [`subscribe_ws`] documents the leptos-use feature-unification hazard and the
+//! `message.get()` + `Effect` pattern required for connections to open. Do not
+//! refactor that helper without running browser E2E (see repository `e2e/README.md`).
 //!
 //! Uses `leptos_use::use_websocket` for connection management (reconnect,
 //! cleanup, protocol resolution).

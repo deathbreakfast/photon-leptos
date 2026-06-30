@@ -1,6 +1,4 @@
 //! Auth extraction for [`super::apply_ws_routes`].
-//!
-//! **Audience:** host integrators implementing session-aware WebSocket routes.
 
 use axum::extract::FromRequestParts;
 use axum::http::request::Parts;

@@ -1,7 +1,5 @@
 //! Automatic WebSocket route registration via quark auto-discovery.
 //!
-//! **Audience:** host integrators.
-//!
 //! [`apply_ws_routes`] scans inventory for [`WsRouteDescriptor`] entries submitted by
 //! `#[photon_leptos::synced]` and mounts Axum GET handlers. User-scoped routes use the
 //! generic `Auth` type parameter — pass your host extractor at [`crate::ws_router`].

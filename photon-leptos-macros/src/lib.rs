@@ -1,6 +1,7 @@
-//! Proc macros for Photon Leptos integration (Zone C).
+//! Proc macros for Photon Leptos integration.
 //!
-//! **Audience:** app authors annotating Leptos server functions for realtime UI.
+//! Annotate Leptos server functions for realtime UI — generates client subscription
+//! helpers and submits WebSocket route descriptors for inventory discovery.
 //!
 //! ## [`synced`] attribute reference
 //!
@@ -12,13 +13,13 @@
 //! | `key` | no | none | Static key filter string for client opts |
 //! | `auth` | no | `"none"` | `"none"` or `"user"` (host auth at `ws_router`) |
 //!
-//! ## Generated symbols (for `counter_get`)
+//! ## Generated symbols (for `list_notifications`)
 //!
 //! | Symbol | Build | Purpose |
 //! |--------|-------|---------|
-//! | `subscribe_counter_get(on_event)` | all | Returns trigger `RwSignal`; bumps on WS event |
-//! | `use_counter_get()` | `hydrate` | Full synced [`Resource`](https://docs.rs/leptos) |
-//! | `__photon_ws_counter_get::PATH` | `ssr` | WebSocket path constant |
+//! | `subscribe_list_notifications(on_event)` | all | Returns trigger `RwSignal`; bumps on WS event |
+//! | `use_list_notifications()` | `hydrate` | Full synced [`Resource`](https://docs.rs/leptos) |
+//! | `__photon_ws_list_notifications::PATH` | `ssr` | WebSocket path constant |
 //! | inventory entry | `ssr` | Auto-discovered by `photon_axum::ws_router` |
 //!
 //! Requires `photon-leptos` features `hydrate` and/or `ssr` on the app crate.
@@ -37,13 +38,13 @@ use proc_macro::TokenStream;
 /// use photon_leptos::synced;
 ///
 /// #[synced(
-///     topic = "counter.updated",
-///     ws = "/ws/counter",
+///     topic = "notifications.updated",
+///     ws = "/ws/notifications",
 ///     strategy = "refetch",
 ///     auth = "none",
 /// )]
-/// pub async fn counter_get() -> Result<CounterResponse, ServerFnError> {
-///     Ok(CounterResponse { value: 0 })
+/// pub async fn list_notifications() -> Result<Vec<Notification>, ServerFnError> {
+///     Ok(vec![])
 /// }
 /// ```
 ///

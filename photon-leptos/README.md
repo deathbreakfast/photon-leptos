@@ -8,4 +8,4 @@ Leptos client hooks and server re-exports for Photon realtime UI.
 
 **Integrator wiring:** [`photon-axum`](../photon-axum/README.md) for `ws_router` and auth traits.
 
-**Maintainer design:** [DESIGN.md](DESIGN.md)
+**Roadmap:** [`ROADMAP.md`](../ROADMAP.md)

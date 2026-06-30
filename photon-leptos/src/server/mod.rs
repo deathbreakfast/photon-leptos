@@ -1,9 +1,7 @@
 //! Server-side WebSocket integration for Photon-backed Leptos apps.
 //!
-//! **Audience:** host integrators wiring Axum at application boot.
-//!
-//! This module re-exports [`photon_axum`] types so app crates depend on a single
-//! `photon-leptos` facade for both client hooks and server registration.
+//! Re-exports [`photon_axum`] types so app crates depend on a single `photon-leptos`
+//! facade for both client hooks and server registration.
 //!
 //! ## Boot sequence
 //!
@@ -20,6 +18,7 @@
 //!
 //! For `auth = "user"` synced routes, pass a host auth type that implements
 //! `photon_axum::PhotonUserExtractor` and `axum::extract::FromRequestParts<AppState>`.
+//! Implement the trait on your session or auth newtype — no product-specific auth crate required.
 //!
 //! ## Submodules
 //!

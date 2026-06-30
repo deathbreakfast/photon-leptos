@@ -1,8 +1,8 @@
 # photon-axum
 
-Axum WebSocket integration for Photon browser clients. **Audience: host integrators** wiring SSR servers.
+Axum WebSocket integration for Photon browser clients — boot-time route registration and WS handlers.
 
-**App authors** should start with the [repository README](../README.md) and `#[photon_leptos::synced]` — this crate is boot-time plumbing.
+**App authors** should start with the [repository README](../README.md) and `#[photon_leptos::synced]` — this crate is server wiring.
 
 ## Boot checklist
 
@@ -26,8 +26,8 @@ Axum WebSocket integration for Photon browser clients. **Audience: host integrat
    // Headless / demo — no user key extraction
    app = ws_router::<AppState, HeadlessWsAuth>(app);
 
-   // Product host — your auth newtype implements PhotonUserExtractor + FromRequestParts<S>
-   // app = ws_router::<AppState, YourPhotonAuth>(app);
+   // Your auth newtype implements PhotonUserExtractor + FromRequestParts<S>
+   // app = ws_router::<AppState, YourAuth>(app);
    ```
 
 4. **Auth modes** — macro attribute `auth = "none"` vs `auth = "user"` selects [`WsAuthMode`](src/axum_ws/descriptor.rs). User routes call `auth.user_key()` for partition filtering.

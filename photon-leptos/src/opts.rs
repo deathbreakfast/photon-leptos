@@ -1,6 +1,7 @@
 //! Configuration types for synced Leptos resources.
 //!
-//! **Audience:** app authors choosing how WS events update UI state.
+//! [`SyncStrategy`] and [`SyncedResourceOpts`] control how WebSocket events update
+//! UI state when using [`crate::synced_resource`] or macro-generated hooks.
 
 #![warn(missing_docs)]
 

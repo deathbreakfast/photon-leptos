@@ -1,7 +1,5 @@
 //! WS route descriptor for quark-based auto-discovery.
 //!
-//! **Audience:** integrators and macro maintainers.
-//!
 //! Each `#[photon_leptos::synced]` invocation submits a [`WsRouteDescriptor`] via
 //! `photon_leptos::inventory::submit!`. [`super::apply_ws_routes`] collects them at runtime.
 
@@ -20,9 +18,9 @@ pub enum WsAuthMode {
 /// [`super::apply_ws_routes`].
 #[derive(Debug, Clone)]
 pub struct WsRouteDescriptor {
-    /// Endpoint path (e.g. `"/ws/counter"`).
+    /// Endpoint path (e.g. `"/ws/notifications"`).
     pub path: &'static str,
-    /// Photon topic name (e.g. `"counter.updated"`).
+    /// Photon topic name (e.g. `"notifications.updated"`).
     pub topic: &'static str,
     /// Auth scoping mode.
     pub auth: WsAuthMode,

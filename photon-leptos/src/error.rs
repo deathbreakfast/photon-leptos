@@ -1,6 +1,4 @@
 //! Error types surfaced by photon-leptos client helpers.
-//!
-//! **Audience:** app authors handling failure in UI or logging.
 
 #![warn(missing_docs)]
 

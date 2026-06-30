@@ -1,6 +1,4 @@
 //! App state traits for Photon access in WebSocket handlers.
-//!
-//! **Audience:** host integrators.
 
 use std::sync::Arc;
 

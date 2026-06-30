@@ -1,4 +1,4 @@
-# photon-leptos quality gates (Zone C integration repo).
+# photon-leptos quality gates (Leptos + Axum integration repo).
 # Run Sentrux scan + check_rules before merging.
 
 [project]

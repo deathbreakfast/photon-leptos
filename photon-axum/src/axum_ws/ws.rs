@@ -1,9 +1,31 @@
 //! WebSocket endpoint that subscribes to Photon and forwards events to clients.
 //!
-//! **Audience:** integrators registering manual routes; maintainers tuning the bridge.
-//!
 //! Each message is a JSON-serialized Photon [`photon_backend::Event`] envelope.
 //! Clients parse `payload_json` (see photon-leptos client helpers).
+//!
+//! ## Manual registration
+//!
+//! When not using inventory auto-discovery, register a handler directly:
+//!
+//! ```rust,ignore
+//! use axum::{extract::ws::WebSocketUpgrade, routing::get, Router};
+//! use photon_axum::{synced_ws_handler, SyncedWsConfig, HasPhoton};
+//! use std::sync::Arc;
+//!
+//! async fn notifications_ws(
+//!     ws: WebSocketUpgrade,
+//!     State(state): State<AppState>,
+//! ) -> axum::response::Response {
+//!     let config = SyncedWsConfig {
+//!         topic: "notifications.updated".into(),
+//!         key_filter: None,
+//!         subscription_name: None,
+//!     };
+//!     synced_ws_handler(ws, state.photon_arc(), config).await
+//! }
+//!
+//! let app = Router::new().route("/ws/notifications", get(notifications_ws));
+//! ```
 
 use std::sync::Arc;
 
