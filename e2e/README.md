@@ -86,4 +86,4 @@ Requires sibling `../photon` checkout (workspace path deps).
 
 ## CI
 
-Manual `workflow_dispatch` job `e2e` in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml): checks out sibling `photon`, installs Playwright, runs `cargo leptos end-to-end`.
+The `e2e` job in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) runs on every push and PR alongside `clippy` and `test`. It checks out sibling `photon`, installs Playwright (chromium, firefox, and webkit in CI), and runs `cargo leptos end-to-end`.

@@ -136,7 +136,7 @@ cd e2e/tests && npm ci && npx playwright install --with-deps
 cargo leptos end-to-end --project photon-leptos-e2e
 ```
 
-The demo is not part of the library crate API. CI exposes an optional `workflow_dispatch` `e2e` job (see [`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
+The demo is not part of the library crate API. CI runs browser E2E on every push and PR (chromium, firefox, webkit) via the `e2e` job in [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
 ## Verify
 
