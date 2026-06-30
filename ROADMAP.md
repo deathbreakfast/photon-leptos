@@ -9,10 +9,10 @@
 - `use_topic_subscription` shared subscription primitive
 - Effect-based replace strategy (direct payload write, refetch fallback on deser error)
 - Unit tests: `SyncStrategy::from_str`, WS path derivation, macro expansion
+- Browser E2E demo + Playwright (see [`e2e/README.md`](e2e/README.md))
 
 ## Open
 
-- Browser E2E demo + Playwright (see [`e2e/README.md`](e2e/README.md))
 - Integration test: publish → WS → Resource refetch
 - WS handler integration tests
 - Shared WS connection pool for duplicate paths (optimization)

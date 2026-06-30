@@ -52,7 +52,7 @@
 use crate::SyncedResourceOpts;
 use codee::string::FromToStringCodec;
 use leptos::prelude::*;
-use leptos_use::{use_websocket_with_options, UseWebSocketOptions, UseWebSocketReturn};
+use leptos_use::{use_websocket_with_options, UseWebSocketOptions};
 use std::future::Future;
 
 /// Photon Event shape (minimal for payload extraction).
@@ -171,19 +171,34 @@ pub fn use_topic_subscription(ws_path: &str) -> PhotonSubscription {
 pub fn subscribe_ws(ws_path: &str, on_event: impl Fn(serde_json::Value) + Send + Sync + 'static) {
     log::info!("[photon-leptos] subscribing to WebSocket {}", ws_path);
 
-    let UseWebSocketReturn { message, .. } =
-        use_websocket_with_options::<String, String, FromToStringCodec, _, _>(
-            ws_path,
-            UseWebSocketOptions::default()
-                .reconnect_limit(leptos_use::ReconnectLimit::Limited(u64::MAX))
-                .reconnect_interval(3_000)
-                .on_error({
-                    let ws_path = ws_path.to_string();
-                    move |err| {
-                        log::warn!("[photon-leptos] WebSocket error on {}: {:?}", ws_path, err);
-                    }
-                }),
-        );
+    let socket = use_websocket_with_options::<String, String, FromToStringCodec, _, _>(
+        ws_path,
+        UseWebSocketOptions::default()
+            .reconnect_limit(leptos_use::ReconnectLimit::Limited(u64::MAX))
+            .reconnect_interval(3_000)
+            .on_error({
+                let ws_path = ws_path.to_string();
+                move |err| {
+                    log::warn!("[photon-leptos] WebSocket error on {}: {:?}", ws_path, err);
+                }
+            }),
+    );
+
+    let message = socket.message;
+
+    // Keep connection control handles alive for the reactive owner lifetime.
+    on_cleanup({
+        let close = socket.close.clone();
+        move || {
+            close();
+        }
+    });
+    Effect::new({
+        let socket = socket.clone();
+        move |_| {
+            let _ = &socket;
+        }
+    });
 
     Effect::new(move |_prev| {
         if let Some(text) = message.get() {

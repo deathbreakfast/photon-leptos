@@ -4,6 +4,7 @@ on:
   push:
     branches: [main, master]
   pull_request:
+  workflow_dispatch:
 
 env:
   CARGO_BUILD_JOBS: 1
@@ -56,3 +57,49 @@ jobs:
       - name: cargo test (integration crates)
         working-directory: photon-leptos
         run: cargo test -p photon-axum -p photon-leptos -p photon-leptos-macros
+
+  e2e:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: photon-leptos
+
+      - uses: actions/checkout@v4
+        with:
+          repository: deathbreakfast/photon
+          path: photon
+
+      - name: Configure git credentials for private deps
+        run: |
+          git config --global url."https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-leptos
+        run: cargo install --locked cargo-leptos
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: photon-leptos/e2e/tests/package-lock.json
+
+      - name: Install Playwright browsers
+        working-directory: photon-leptos/e2e/tests
+        run: |
+          npm ci
+          npx playwright install --with-deps
+
+      - name: cargo leptos end-to-end
+        working-directory: photon-leptos
+        run: cargo leptos end-to-end --project photon-leptos-e2e
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: photon-leptos/e2e/tests/playwright-report/
+          if-no-files-found: ignore

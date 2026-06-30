@@ -1,0 +1,63 @@
+[package]
+name = "photon-leptos-e2e-demo"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+leptos = { workspace = true }
+leptos_router = { workspace = true }
+photon-leptos = { path = "../../photon-leptos", default-features = false }
+serde = { workspace = true }
+serde_json = { workspace = true }
+cfg-if = { workspace = true }
+log = { workspace = true }
+dashmap = { workspace = true }
+
+photon = { workspace = true, optional = true }
+photon-axum = { path = "../../photon-axum", optional = true }
+continuum = { workspace = true, optional = true, features = ["mem"] }
+futures = { workspace = true, optional = true }
+axum = { workspace = true, optional = true }
+leptos_axum = { workspace = true, optional = true }
+tokio = { workspace = true, optional = true }
+tower-http = { workspace = true, optional = true }
+anyhow = { workspace = true, optional = true }
+console_error_panic_hook = { version = "0.1", optional = true }
+wasm-bindgen = { workspace = true, optional = true }
+
+[features]
+default = []
+hydrate = [
+    "leptos/hydrate",
+    "photon-leptos/hydrate",
+    "dep:console_error_panic_hook",
+    "dep:wasm-bindgen",
+]
+ssr = [
+    "dep:photon",
+    "dep:photon-axum",
+    "dep:continuum",
+    "dep:futures",
+    "dep:axum",
+    "dep:leptos_axum",
+    "dep:tokio",
+    "dep:tower-http",
+    "dep:anyhow",
+    "leptos/ssr",
+    "leptos_router/ssr",
+    "photon-leptos/ssr",
+    "photon-axum/ssr",
+]
+
+[[bin]]
+name = "photon-leptos-e2e-demo"
+path = "src/main.rs"
+required-features = ["ssr"]
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+getrandom = { version = "0.2", features = ["js"] }
+web-sys = { version = "0.3", features = ["Window", "HtmlDocument"] }

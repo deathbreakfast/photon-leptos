@@ -127,9 +127,16 @@ Photon boot (Continuum + `PhotonBuilder`) lives in the [photon README](https://g
 
 **SSR vs hydrate?** On SSR-only builds, `subscribe_*` compiles out the WebSocket connection; the trigger stays at 0 and the initial value comes from the `Resource` alone.
 
-## E2E (planned)
+## E2E
 
-A self-contained counter demo for browser tests is specified in [e2e/README.md](e2e/README.md). It is not part of the library crate API — see [`ROADMAP.md`](ROADMAP.md) for implementation status.
+A self-contained counter demo and Playwright harness live under [`e2e/`](e2e/README.md). Run browser tests from the workspace root:
+
+```bash
+cd e2e/tests && npm ci && npx playwright install --with-deps
+cargo leptos end-to-end --project photon-leptos-e2e
+```
+
+The demo is not part of the library crate API. CI exposes an optional `workflow_dispatch` `e2e` job (see [`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
 
 ## Verify
 
