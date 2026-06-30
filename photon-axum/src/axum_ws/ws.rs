@@ -1,4 +1,9 @@
 //! WebSocket endpoint that subscribes to Photon and forwards events to clients.
+//!
+//! **Audience:** integrators registering manual routes; maintainers tuning the bridge.
+//!
+//! Each message is a JSON-serialized Photon [`photon_backend::Event`] envelope.
+//! Clients parse `payload_json` (see photon-leptos client helpers).
 
 use std::sync::Arc;
 
@@ -21,7 +26,7 @@ pub struct SyncedWsConfig {
     pub subscription_name: Option<String>,
 }
 
-/// Returns an Axum handler for the given WebSocket config.
+/// Upgrade handler: subscribe to `config.topic` and forward serialized events to the client.
 pub async fn synced_ws_handler(
     ws: WebSocketUpgrade,
     photon: Arc<Photon>,

@@ -1,0 +1,29 @@
+# photon-leptos quality gates (Zone C integration repo).
+# Run Sentrux scan + check_rules before merging.
+
+[project]
+name = "photon-leptos"
+profile = "monorepo-pragmatic"
+
+[constraints]
+max_cycles = 0
+max_cc = 25
+no_god_files = true
+
+[thresholds]
+max_coupling_score = 8.0
+max_cross_module_edges = 80
+
+[[boundaries]]
+from = "photon-axum/src/**"
+to = "photon-leptos/src/client.rs"
+reason = "Axum WS layer must not depend on Leptos client hooks"
+
+[[boundaries]]
+from = "photon-leptos-macros/src/**"
+to = "photon-leptos/src/client.rs"
+reason = "Proc macros expand to quoted paths; no direct client module imports"
+
+[revisit]
+trigger = "Tighten thresholds after integration repo stabilizes."
+note = "Target <=400 LOC per .rs file; hard stop at 450."

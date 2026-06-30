@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+env:
+  CARGO_BUILD_JOBS: 1
+  RUST_BACKTRACE: 1
+  CARGO_NET_GIT_FETCH_WITH_CLI: true
+
+jobs:
+  clippy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: photon-leptos
+
+      - uses: actions/checkout@v4
+        with:
+          repository: deathbreakfast/photon
+          path: photon
+
+      - name: Configure git credentials for private deps
+        run: |
+          git config --global url."https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - name: cargo clippy (workspace)
+        working-directory: photon-leptos
+        run: cargo clippy --workspace --all-targets --features ssr -- -D warnings
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: photon-leptos
+
+      - uses: actions/checkout@v4
+        with:
+          repository: deathbreakfast/photon
+          path: photon
+
+      - name: Configure git credentials for private deps
+        run: |
+          git config --global url."https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: cargo test (integration crates)
+        working-directory: photon-leptos
+        run: cargo test -p photon-axum -p photon-leptos -p photon-leptos-macros

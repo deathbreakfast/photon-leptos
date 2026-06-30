@@ -20,6 +20,7 @@ codee = { workspace = true, optional = true }
 
 photon = { workspace = true, optional = true }
 photon-axum = { path = "../photon-axum", optional = true }
+photon-leptos-macros = { path = "../photon-leptos-macros" }
 tokio = { workspace = true, optional = true }
 quark = { workspace = true, optional = true }
 

@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["photon-axum", "photon-leptos"]
+members = ["photon-axum", "photon-leptos", "photon-leptos-macros"]
 
 [workspace.dependencies]
 quark = { git = "https://github.com/unified-field-dev/quark.git", rev = "77e50b8374b65319ceeaf0b2ab1664a2919f517a" }

@@ -1,19 +1,23 @@
-//! Error types for photon-leptos.
+//! Error types surfaced by photon-leptos client helpers.
+//!
+//! **Audience:** app authors handling failure in UI or logging.
+
+#![warn(missing_docs)]
 
 use thiserror::Error;
 
-/// Errors produced by photon-leptos.
+/// Errors produced by photon-leptos client-side helpers.
 #[derive(Error, Debug)]
 pub enum PhotonLeptosError {
-    /// WebSocket connection failed.
+    /// WebSocket connection or message handling failed.
     #[error("WebSocket error: {0}")]
     WebSocket(String),
 
-    /// Failed to serialize or deserialize JSON.
+    /// Failed to serialize or deserialize JSON event payloads.
     #[error("JSON error: {0}")]
     Json(String),
 
-    /// Server function invocation failed.
+    /// Underlying Leptos server function returned an error.
     #[error("Server function error: {0}")]
     ServerFn(String),
 }

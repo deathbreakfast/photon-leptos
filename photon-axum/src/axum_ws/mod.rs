@@ -1,6 +1,14 @@
-//! Axum WebSocket registration for realtime resource routes (SSR).
+//! Axum WebSocket integration modules for Photon realtime routes.
 //!
-//! Headless hosts register WS routes without pulling a UI framework.
+//! **Audience:** host integrators.
+//!
+//! | Submodule | Purpose |
+//! |-----------|---------|
+//! | auth (private) | [`PhotonUserExtractor`], [`HeadlessWsAuth`] |
+//! | descriptor (private) | [`WsRouteDescriptor`], [`WsAuthMode`] for inventory |
+//! | routes (private) | [`apply_ws_routes`] auto-discovery |
+//! | [`state`] | [`HasPhoton`] app-state trait |
+//! | [`ws`] | `SyncedWsConfig`, `synced_ws_handler` |
 
 mod auth;
 mod descriptor;

@@ -65,7 +65,7 @@ photon-leptos is a helper crate that keeps Leptos resources in sync with Photon 
 
 ### Shipped API
 
-Macros (`#[photon::synced]`), `synced_resource` / append helpers, WebSocket handlers, and quark route registration
+Macros (`#[photon_leptos::synced]`), `synced_resource` / append helpers, WebSocket handlers, and quark route registration
 are documented in **`cargo doc -p photon-leptos --open`**. This file keeps architecture, requirements, and roadmap.
 
 **Integration**: [Photon](../photon/DESIGN.md) for event subscriptions, [Orbital](../orbital/README.md) for SSR patterns.
@@ -102,7 +102,7 @@ How the resource responds to events:
 use orbital::server;
 
 // Server function that owns Valence access (SSR only)
-#[photon::synced(
+#[photon_leptos::synced(
     topic = "user.notifications",
     ws = "/ws/notifications",
     strategy = "refetch"
@@ -215,7 +215,7 @@ The synced resource helper manages WebSocket connection lifecycle:
 ### Macro API
 
 ```rust
-#[photon::synced(
+#[photon_leptos::synced(
     topic = "user.notifications",      // Photon topic name
     ws = "/ws/notifications",          // WebSocket endpoint path
     strategy = "refetch",               // refetch | append | replace
@@ -427,7 +427,7 @@ The `#[photon::synced]` macro currently generates only the client-side
 **Step 1 — Annotate the server function (only step the developer does):**
 
 ```rust
-#[photon::synced(
+#[photon_leptos::synced(
     topic = "user.notifications",
     strategy = "refetch",
     auth = "user",           // NEW: scoping mode

@@ -379,7 +379,7 @@ checksum = "f67855af358fcb20fac58f9d714c94e2b228fe5694c1c9b4ead4a366343eda1b"
 [[package]]
 name = "continuum"
 version = "0.1.0"
-source = "git+https://github.com/unified-field-dev/continuum.git?rev=85c35a964299b79306e54d9273f142082af3f374#85c35a964299b79306e54d9273f142082af3f374"
+source = "git+https://github.com/deathbreakfast/continuum.git?rev=ead18a741104a44bdb2c92eb495087afc4dc5dda#ead18a741104a44bdb2c92eb495087afc4dc5dda"
 dependencies = [
  "continuum-backend-mem",
  "continuum-core",
@@ -388,7 +388,7 @@ dependencies = [
 [[package]]
 name = "continuum-backend-mem"
 version = "0.1.0"
-source = "git+https://github.com/unified-field-dev/continuum.git?rev=85c35a964299b79306e54d9273f142082af3f374#85c35a964299b79306e54d9273f142082af3f374"
+source = "git+https://github.com/deathbreakfast/continuum.git?rev=ead18a741104a44bdb2c92eb495087afc4dc5dda#ead18a741104a44bdb2c92eb495087afc4dc5dda"
 dependencies = [
  "async-trait",
  "continuum-core",
@@ -398,7 +398,7 @@ dependencies = [
 [[package]]
 name = "continuum-core"
 version = "0.1.0"
-source = "git+https://github.com/unified-field-dev/continuum.git?rev=85c35a964299b79306e54d9273f142082af3f374#85c35a964299b79306e54d9273f142082af3f374"
+source = "git+https://github.com/deathbreakfast/continuum.git?rev=ead18a741104a44bdb2c92eb495087afc4dc5dda#ead18a741104a44bdb2c92eb495087afc4dc5dda"
 dependencies = [
  "async-trait",
  "chrono",
@@ -1459,24 +1459,12 @@ checksum = "9b4f627cb1b25917193a259e49bdad08f671f8d9708acfd5fe0a8c1455d87220"
 name = "photon"
 version = "0.1.0"
 dependencies = [
- "anyhow",
- "async-stream",
- "async-trait",
- "chrono",
- "futures",
- "log",
  "photon-backend",
  "photon-core",
  "photon-macros",
  "photon-runtime",
  "photon-telemetry",
  "quark",
- "serde",
- "serde_json",
- "thiserror 2.0.18",
- "tokio",
- "tracing",
- "uuid",
 ]
 
 [[package]]
@@ -1539,11 +1527,22 @@ dependencies = [
  "log",
  "photon",
  "photon-axum",
+ "photon-leptos-macros",
  "quark",
  "serde",
  "serde_json",
  "thiserror 2.0.18",
  "tokio",
+]
+
+[[package]]
+name = "photon-leptos-macros"
+version = "0.1.0"
+dependencies = [
+ "darling",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -1560,6 +1559,7 @@ name = "photon-runtime"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "continuum",
  "futures",
  "photon-backend",
  "photon-core",
@@ -1573,7 +1573,6 @@ dependencies = [
 name = "photon-telemetry"
 version = "0.1.0"
 dependencies = [
- "serde",
  "serde_json",
 ]
 

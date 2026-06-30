@@ -5,23 +5,13 @@ This crate uses Sentrux MCP (`user-sentrux`) as a structure-health signal and
 
 ## Current Health Report
 
-Last updated: 2026-03-17
+Last updated: 2026-06-30
 
 Baseline metric source:
-- `user-sentrux.scan(path="/home/seanorourke/web-app-template/photon-leptos")`
-- `cargo test -p photon-leptos`
+
+- `user-sentrux.scan(path="/home/seanorourke/photon-leptos")`
+- `cargo test -p photon-leptos --features ssr`
 - `cargo llvm-cov -p photon-leptos --summary-only`
-
-- Sentrux MCP scan:
-  - Overall grade: `unknown`
-  - Structure grade: `D`
-  - Architecture grade: `B`
-  - Graph summary: `15` files, `1065` lines, `11` import edges
-
-
-
-- Tests: `not captured`
-- LLVM line coverage: `not captured`
 
 ## Targets
 
@@ -32,42 +22,30 @@ Baseline metric source:
 
 ## Local Commands
 
-### Quality CLI (recommended)
-
-Generate this crate baseline end-to-end with the shared tool:
-
-```bash
-cargo run -p quality -- check --target photon-leptos
-```
-
 ### Sentrux MCP (preferred)
 
 Run in this order:
-1. `scan(path="/home/seanorourke/web-app-template/photon-leptos")`
-2. `health()`
-3. `cycles()`
-4. `coupling()`
-5. `architecture()`
-6. `test_gaps(limit=20)`
-7. `hottest(limit=10)`
 
-### Proper test-coverage measurement
+1. `scan(path="/home/seanorourke/photon-leptos")`
+2. `check_rules()`
+3. `health()`
+4. `cycles()`
+5. `coupling()`
 
-Use LLVM source-based coverage:
+### Test coverage
 
 ```bash
-cargo llvm-cov -p photon-leptos --text --show-missing-lines
+cargo llvm-cov -p photon-leptos --features ssr --text --show-missing-lines
 ```
 
 Optional summary export:
 
 ```bash
-cargo llvm-cov -p photon-leptos --json --summary-only --output-path photon-leptos/coverage-summary.json
+cargo llvm-cov -p photon-leptos --features ssr --json --summary-only --output-path photon-leptos/coverage-summary.json
 ```
 
 ## CI Gate Policy
 
-- CI should enforce `cargo test -p photon-leptos`.
-- CI should capture LLVM coverage summary when `cargo-llvm-cov` is available.
-- Sentrux checks should run as best-effort in CI (`scan`, `cycles`, `coupling`, `health`) when Sentrux CLI is available.
-- Trend structure grade, architecture grade, and LLVM line coverage for this crate.
+- CI enforces `cargo test -p photon-leptos --features ssr` (see workspace [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)).
+- Sentrux `scan` + `check_rules` on the repo root before large doc or API changes.
+- Target ≤400 LOC per `.rs` file; hard stop at 450 (see [`.sentrux/rules.toml`](../.sentrux/rules.toml)).

@@ -5,15 +5,15 @@ use photon_leptos::{SyncStrategy, SyncedResourceOpts};
 #[test]
 fn sync_strategy_from_str() {
     assert_eq!(
-        SyncStrategy::from_str("refetch"),
-        Some(SyncStrategy::Refetch)
+        "refetch".parse::<SyncStrategy>(),
+        Ok(SyncStrategy::Refetch)
     );
-    assert_eq!(SyncStrategy::from_str("append"), Some(SyncStrategy::Append));
+    assert_eq!("append".parse::<SyncStrategy>(), Ok(SyncStrategy::Append));
     assert_eq!(
-        SyncStrategy::from_str("replace"),
-        Some(SyncStrategy::Replace)
+        "replace".parse::<SyncStrategy>(),
+        Ok(SyncStrategy::Replace)
     );
-    assert_eq!(SyncStrategy::from_str("invalid"), None);
+    assert!("invalid".parse::<SyncStrategy>().is_err());
 }
 
 #[test]

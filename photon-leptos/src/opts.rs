@@ -1,6 +1,16 @@
-//! Options for synced resources.
+//! Configuration types for synced Leptos resources.
+//!
+//! **Audience:** app authors choosing how WS events update UI state.
+
+#![warn(missing_docs)]
 
 /// How the resource responds to incoming Photon events.
+///
+/// | Variant | When to use |
+/// |---------|-------------|
+/// | [`Refetch`](Self::Refetch) | Server owns query logic (lists, joins, auth-scoped reads) |
+/// | [`Replace`](Self::Replace) | WS payload is the full new value (counts, scalars) |
+/// | [`Append`](Self::Append) | Feed-style lists — use [`crate::synced_resource_append`] |
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum SyncStrategy {
     /// Re-call the server function to fetch fresh data.
@@ -14,19 +24,20 @@ pub enum SyncStrategy {
     Replace,
 }
 
-impl SyncStrategy {
-    /// Parse from string attribute (e.g. `"refetch"`, `"append"`, `"replace"`).
-    pub fn from_str(s: &str) -> Option<Self> {
+impl std::str::FromStr for SyncStrategy {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "refetch" => Some(SyncStrategy::Refetch),
-            "append" => Some(SyncStrategy::Append),
-            "replace" => Some(SyncStrategy::Replace),
-            _ => None,
+            "refetch" => Ok(SyncStrategy::Refetch),
+            "append" => Ok(SyncStrategy::Append),
+            "replace" => Ok(SyncStrategy::Replace),
+            _ => Err(()),
         }
     }
 }
 
-/// Configuration for a synced resource.
+/// Configuration for a [`crate::synced_resource`] or macro-generated hook.
 #[derive(Debug, Clone)]
 pub struct SyncedResourceOpts {
     /// Photon topic name (e.g. `"user.notifications"`).
