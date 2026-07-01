@@ -7,7 +7,7 @@ use anyhow::{bail, Context, Result};
 
 use crate::client::{
     default_target, finish_session, result_stats, run_paced_publish, run_sustained_load,
-    spawn_connections, PublishOptions, ServerTarget,
+    spawn_connections, wait_for_health, PublishOptions, ServerTarget,
 };
 use crate::experiments::{evaluate_step, DegradationThresholds, StepVerdict};
 use crate::hardware::validate_hardware;
@@ -107,12 +107,19 @@ fn base_report(ctx: &RunContext, phase: u32, scenario: &str) -> BenchReport {
 }
 
 async fn run_pls0(ctx: &RunContext, phase: u32) -> Result<BenchReport> {
-    let rates = [100u32, 1000];
+    let rates: Vec<u32> = match ctx.rate_per_sec {
+        Some(r) => vec![r],
+        None => vec![100, 1000],
+    };
     let thresholds = DegradationThresholds::default();
     let target = default_target(&ctx.server_url);
     let mut knee = 0u32;
 
     for rate in rates {
+        if rate == 1000 {
+            tokio::time::sleep(Duration::from_secs(30)).await;
+        }
+        wait_for_health(&target, Duration::from_secs(60)).await?;
         let mut last_pass = 0u32;
         for &n in PLS0_SWEEP {
             let result = run_sustained_load(
