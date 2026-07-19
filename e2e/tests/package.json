@@ -1,0 +1,10 @@
+{
+  "name": "photon-leptos-e2e-tests",
+  "private": true,
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.51.0"
+  }
+}

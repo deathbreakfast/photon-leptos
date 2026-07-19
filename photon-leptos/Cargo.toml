@@ -1,0 +1,48 @@
+[package]
+name = "photon-leptos"
+version = "0.1.0"
+edition = "2021"
+description = "Leptos integration for Photon events — synced resources and WebSocket real-time updates"
+license = "MIT"
+repository = "https://github.com/unified-field-dev/photon-leptos"
+
+[lints]
+workspace = true
+
+[dependencies]
+leptos = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+cfg-if = { workspace = true }
+log = { workspace = true }
+futures = { workspace = true }
+
+leptos-use = { workspace = true, optional = true, features = ["use_websocket"] }
+codee = { workspace = true, optional = true }
+
+photon = { workspace = true, optional = true }
+photon-axum = { version = "0.1.0", path = "../photon-axum", optional = true }
+photon-leptos-macros = { version = "0.1.0", path = "../photon-leptos-macros" }
+tokio = { workspace = true, optional = true }
+quark = { workspace = true, optional = true }
+
+[features]
+default = []
+hydrate = ["leptos/hydrate", "dep:leptos-use", "dep:codee"]
+ssr = [
+    "leptos/ssr",
+    "dep:photon",
+    "dep:photon-axum",
+    "photon/runtime",
+    "photon-axum/ssr",
+    "dep:tokio",
+    "dep:quark",
+]
+
+[package.metadata.docs.rs]
+features = ["ssr", "hydrate"]
+all-features = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }

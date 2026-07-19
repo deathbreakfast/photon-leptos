@@ -1,0 +1,87 @@
+[workspace]
+resolver = "2"
+members = [
+    "photon-axum",
+    "photon-leptos",
+    "photon-leptos-macros",
+    "e2e/demo",
+    "photon-leptos-bench",
+]
+[[workspace.metadata.leptos]]
+name = "photon-leptos-e2e"
+bin-package = "photon-leptos-e2e-demo"
+lib-package = "photon-leptos-e2e-demo"
+site-root = "e2e/demo/site"
+site-pkg-dir = "pkg"
+end2end-dir = "e2e/tests"
+end2end-cmd = "npx playwright test"
+site-addr = "127.0.0.1:3000"
+reload-port = 3001
+bin-features = ["ssr"]
+lib-features = ["hydrate"]
+
+[profile.wasm-release]
+inherits = "release"
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+
+[workspace.lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+# Noise dial-backs for Leptos / Axum / macros
+module_name_repetitions = "allow"
+must_use_candidate = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+return_self_not_must_use = "allow"
+wildcard_imports = "allow"
+significant_drop_tightening = "allow"
+future_not_send = "allow"
+doc_markdown = "allow"
+use_self = "allow"
+needless_pass_by_value = "allow"
+missing_const_for_fn = "allow"
+option_if_let_else = "allow"
+too_many_lines = "allow"
+map_unwrap_or = "allow"
+redundant_closure_for_method_calls = "allow"
+single_match_else = "allow"
+match_wildcard_for_single_variants = "allow"
+items_after_statements = "allow"
+redundant_clone = "allow"
+unused_async = "allow"
+
+[workspace.dependencies]
+quark = { package = "uf-quark", version = "0.1.1" }
+photon-runtime = { version = "=0.1.1", default-features = false, features = ["runtime", "mem"] }
+photon-backend = { version = "=0.1.1", default-features = false, features = ["runtime", "mem"] }
+photon = { package = "uf-photon", version = "=0.1.1", default-features = false, features = ["runtime", "mem"] }
+axum = { version = "0.8.4", features = ["ws", "tokio", "http1"] }
+futures = "0.3"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "2.0.12"
+tokio = { version = "1.45.0", features = ["rt-multi-thread", "macros", "sync", "time"] }
+leptos = { version = "0.8.20", default-features = false }
+leptos-use = { version = "0.18", default-features = false }
+codee = { version = "0.3", default-features = false }
+cfg-if = "1"
+log = "0.4"
+leptos_axum = { version = "0.8", default-features = true }
+leptos_meta = { version = "0.8", default-features = false }
+leptos_router = { version = "0.8", default-features = false }
+dashmap = "6"
+anyhow = "1"
+console_error_panic_hook = "0.1"
+wasm-bindgen = "0.2"
+tower-http = { version = "0.6", features = ["fs"] }
+
+# photon-testkit is unpublished; git tag pulls workspace path crates that would
+# duplicate crates.io photon-runtime. Force those onto the registry builds.
+[patch."https://github.com/unified-field-dev/photon.git"]
+photon-runtime = { version = "=0.1.1" }
+photon-backend = { version = "=0.1.1" }
+photon-telemetry = { version = "=0.1.1" }
+uf-photon-core = { version = "=0.1.1" }

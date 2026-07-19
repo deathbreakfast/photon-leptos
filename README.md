@@ -1,0 +1,177 @@
+# photon-leptos
+
+[![CI](https://github.com/unified-field-dev/photon-leptos/actions/workflows/ci.yml/badge.svg)](https://github.com/unified-field-dev/photon-leptos/actions/workflows/ci.yml)
+[![crates.io](https://img.shields.io/crates/v/photon-leptos.svg)](https://crates.io/crates/photon-leptos)
+[![docs.rs](https://docs.rs/photon-leptos/badge.svg)](https://docs.rs/photon-leptos)
+[![crates.io](https://img.shields.io/crates/v/photon-axum.svg)](https://crates.io/crates/photon-axum)
+[![docs.rs](https://docs.rs/photon-axum/badge.svg)](https://docs.rs/photon-axum)
+[![crates.io](https://img.shields.io/crates/v/photon-leptos-macros.svg)](https://crates.io/crates/photon-leptos-macros)
+[![docs.rs](https://docs.rs/photon-leptos-macros/badge.svg)](https://docs.rs/photon-leptos-macros)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
+[GitHub](https://github.com/unified-field-dev/photon-leptos) · [photon](https://github.com/unified-field-dev/photon) · [docs.rs](https://docs.rs/photon-leptos)
+
+Leptos + Axum integration built on [photon](https://github.com/unified-field-dev/photon) — browser clients subscribe to topics over WebSockets and refetch synced server functions when events arrive.
+
+```rust
+use leptos::prelude::*;
+use photon::{topic, /* ... */};
+use photon_leptos::synced;
+
+#[topic(name = "notifications.updated")]
+pub struct NotificationUpdated { /* ... */ }
+
+#[synced(
+    topic = "notifications.updated",
+    ws = "/ws/notifications",
+    strategy = "refetch",
+    auth = "none",
+)]
+pub async fn list_notifications() -> Result<Vec<Notification>, ServerFnError> { /* ... */ }
+
+// Somewhere else on the server — not the viewing client's click:
+async fn on_import_job_finished(...) {
+    NotificationUpdated { /* ... */ }.publish().await?;
+}
+
+// In the Leptos page (any number of viewers):
+let trigger = subscribe_list_notifications(|| {});
+let items = Resource::new(move || trigger.get(), move |_| list_notifications());
+```
+
+Publish can come from any server path (background job, webhook handler, another user's write)—subscribers only need the topic and synced read fn.
+
+## Status
+
+photon-leptos **0.1 is experimental**. Treat the browser WebSocket as an ephemeral invalidation / live-update channel:
+
+| Strategy | Status |
+|----------|--------|
+| **Refetch** | Supported — server function remains the authoritative source of state |
+| **Replace** | Experimental — event payload must deserialize as the success value (`T` or `Ok` of `Result<T, E>`); the macro calls `synced_resource_replace_result` for `Result` return types |
+| **Append** | Best-effort live tail — buffers events during initial load; **no** cursor, dedupe, or reconnect replay |
+
+There is no browser checkpoint or replay handshake. Across disconnect/reconnect, prefer Refetch when exact state matters. `BroadcastHub` is process-local (not multi-replica).
+
+**Host responsibilities:** authentication, WebSocket Origin policy (`HasPhoton::allow_ws_origin`), connection/group/rate limits, TLS, and graceful shutdown. Subscribe keys are UTF-8 (max 256 bytes); key-mismatch responses do not echo raw keys.
+
+**Client observability:** `subscribe_ws` returns a [`PhotonWsHandle`](https://docs.rs/photon-leptos) with reactive status, `last_error`, and `close()`. `use_topic_subscription` exposes the same signals on `PhotonSubscription`.
+
+## About photon-leptos
+
+photon-leptos bridges Photon pub/sub events to Leptos UIs over WebSockets. You define topics and publish from server code with **photon**; you annotate read server functions with **`#[photon_leptos::synced]`** to get client subscription helpers and automatic WS route registration; you merge **`photon_axum::ws_router`** once at host boot.
+
+`#[photon::topic]` and `#[photon::subscribe]` live in the **photon** crate. Core **photon** deliberately has no browser client wiring — `#[photon::synced]` compile-errors there by design.
+
+## The model
+
+```mermaid
+sequenceDiagram
+    participant Job as BackgroundJob
+    participant Photon as PhotonRuntime
+    participant WS as ws_endpoint
+    participant Sub as subscribe_helper
+    participant Res as Resource
+    participant UI as PageView
+
+    Job->>Photon: NotificationUpdated.publish
+    Photon->>WS: stream event
+    WS->>Sub: WebSocket envelope
+    Sub->>Sub: trigger bump
+    Sub->>Res: refetch synced read fn
+    Res->>UI: updated view
+```
+
+Client-initiated writes can also publish the same topic; the diagram highlights the decoupled case where the event source is unrelated to the viewing client.
+
+- **Topic** — typed event on a named stream (`#[photon::topic]` in the photon crate)
+- **Publish** — any server path mutates state, then `.publish()` after commit
+- **Synced read** — `#[photon_leptos::synced]` generates `subscribe_<fn>` + WS inventory entry
+- **Client update** — Refetch bumps a trigger into a Leptos `Resource`; Replace / Append apply payload strategies (see [Status](#status))
+- **Subscription handle** — status / last error / close via `PhotonWsHandle` or `PhotonSubscription`
+- **Host** — `ws_router` discovers inventory routes and mounts Axum WS handlers
+
+## Strategies (quick reference)
+
+| Attribute | Generated path | Event payload |
+|-----------|----------------|---------------|
+| `strategy = "refetch"` (default) | `synced_resource` → refetch | Ignored (invalidate only) |
+| `strategy = "replace"` | `synced_resource` or `synced_resource_replace_result` | Full `T`, or `Ok` value when return is `Result<T, E>` |
+| `strategy = "append"` | `synced_resource_append` | Item type `U` for `Result<Vec<U>, E>` |
+
+## Crates
+
+| Crate | Role | Docs |
+|-------|------|------|
+| `photon-leptos` | Client hooks, `synced` re-export, server re-exports | [docs.rs/photon-leptos](https://docs.rs/photon-leptos) |
+| `photon-axum` | Axum WS routes, inventory auto-discovery, `synced_ws_handler` | [docs.rs/photon-axum](https://docs.rs/photon-axum) |
+| `photon-leptos-macros` | Proc macro `#[photon_leptos::synced]` | [docs.rs/photon-leptos-macros](https://docs.rs/photon-leptos-macros) |
+
+## Documentation
+
+- **Architecture and API** — [docs.rs/photon-leptos](https://docs.rs/photon-leptos) (primary reference)
+- **Axum boot** — [`photon-axum/README.md`](photon-axum/README.md) · [docs.rs/photon-axum](https://docs.rs/photon-axum) · `ws_router` · `HasPhoton` on your app state
+- **Macro reference** — [docs.rs/photon-leptos-macros](https://docs.rs/photon-leptos-macros)
+
+## Getting started
+
+Add the crates from crates.io:
+
+```toml
+[dependencies]
+photon = { package = "uf-photon", version = "0.1", features = ["runtime", "mem"] }
+photon-leptos = { version = "0.1", features = ["hydrate", "ssr"] }
+photon-axum = { version = "0.1", features = ["ssr"] }
+```
+
+**Features:**
+
+- `photon-leptos/hydrate` — client WebSocket subscription helpers (enable on WASM/client builds)
+- `photon-leptos/ssr` — server WS route registration via `photon-axum`
+- `photon-axum/ssr` — Axum WS handler crate (required for `ws_router`)
+
+Photon boot (`PhotonBuilder` + in-process `mem` storage) lives in the [photon README](https://github.com/unified-field-dev/photon/blob/main/README.md#getting-started).
+
+## FAQ
+
+**Why does `#[photon::synced]` fail to compile?** The **photon** crate compile-errors that macro by design. Use `#[photon_leptos::synced]` from this repo (re-exported as `photon_leptos::synced`).
+
+**How does `auth = "user"` work?** The macro registers a user-scoped route. Your host passes a concrete auth type at `ws_router::<AppState, YourAuth>` that implements `PhotonUserExtractor` and `FromRequestParts<S>`.
+
+**What does `auth = "none"` mean?** Unauthenticated. Clients may omit `?key=` (broadcast) or supply an optional client-selected key for partition scoping. Override `HasPhoton::allow_ws_origin` and bound keys/connections in production.
+
+**How do I observe WebSocket status?** Use `subscribe_ws`’s `PhotonWsHandle` (`status`, `last_error`, `close()`), or `use_topic_subscription` which surfaces the same fields on `PhotonSubscription`.
+
+**Why did Replace fall back to refetch?** The event JSON must match the success value type. For `Result<Counter, ServerFnError>`, publish a serialized `Counter`, not a serialized `Result`. The macro selects `synced_resource_replace_result` automatically for `Result` return types.
+
+**Why is my WS route missing?** Both conditions are required: (1) a crate linked into the binary uses `#[photon_leptos::synced]` (inventory submit), and (2) boot calls `photon_axum::ws_router` (or `photon_leptos::server::ws_router`).
+
+**SSR vs hydrate?** On SSR-only builds, `subscribe_*` compiles out the WebSocket connection; the trigger stays at 0 and the initial value comes from the `Resource` alone.
+
+## E2E
+
+A self-contained counter demo and Playwright harness live under [`e2e/`](e2e/README.md). Run browser tests from the workspace root:
+
+```bash
+cd e2e/tests && npm ci && npx playwright install --with-deps
+cargo leptos end-to-end --project photon-leptos-e2e
+```
+
+The demo is not part of the library crate API. CI runs browser E2E on every push and PR (chromium, firefox, webkit) via the `e2e` job in [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
+
+## Verify
+
+CI runs on every push and PR ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)):
+
+```bash
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets --features ssr -- -D warnings
+cargo test -p photon-axum -p photon-leptos -p photon-leptos-macros -p photon-leptos-bench --features ssr
+RUSTDOCFLAGS="-D warnings" cargo doc --workspace --all-features --no-deps
+cargo package -p photon-leptos-macros --list
+cargo package -p photon-axum --list
+cargo package -p photon-leptos --list
+cargo check -p photon-leptos --target wasm32-unknown-unknown --features hydrate
+```
+
+Workspace members resolve core photon from crates.io (`uf-photon`).
