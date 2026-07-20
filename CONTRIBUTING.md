@@ -36,3 +36,7 @@ CI checks out [`unified-field-dev/photon`](https://github.com/unified-field-dev/
 
 - Prefer small, focused PRs.
 - Note any intentional API or behavior changes in [`CHANGELOG.md`](CHANGELOG.md).
+
+## Code of conduct
+
+Participation is governed by [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md). Security reports: [`SECURITY.md`](SECURITY.md).
