@@ -152,6 +152,13 @@ mod tests {
     }
 
     #[test]
+    fn rejects_invalid_utf8_after_decode() {
+        // Lone continuation byte — valid hex decode, invalid UTF-8.
+        let uri: Uri = "/ws/x?key=%80".parse().unwrap();
+        assert_eq!(client_key_from_uri(&uri), None);
+    }
+
+    #[test]
     fn rejects_oversized_key() {
         let long = "a".repeat(MAX_KEY_LEN + 1);
         let uri: Uri = format!("/ws/x?key={long}").parse().unwrap();

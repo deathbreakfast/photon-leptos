@@ -29,11 +29,17 @@ struct TestKeyed {
 #[derive(Clone)]
 struct TestState {
     photon: Arc<Photon>,
+    /// When `Some(false)`, reject all Origins (SEC-002).
+    allow_origin: Option<bool>,
 }
 
 impl HasPhoton for TestState {
     fn photon_arc(&self) -> Arc<Photon> {
         Arc::clone(&self.photon)
+    }
+
+    fn allow_ws_origin(&self, _origin: Option<&str>) -> bool {
+        self.allow_origin.unwrap_or(true)
     }
 }
 
@@ -87,7 +93,23 @@ async fn probe_user_key(auth: CookieUser, uri: Uri) -> Response {
 }
 
 fn probe_router() -> Router<TestState> {
-    Router::new().route("/probe-auth", axum::routing::get(probe_user_key))
+    Router::new()
+        .route("/probe-auth", axum::routing::get(probe_user_key))
+        .route("/probe-origin", axum::routing::get(probe_origin))
+}
+
+/// Mirrors `routes.rs` origin gate used by inventory-mounted WS handlers.
+async fn probe_origin(
+    axum::extract::State(state): axum::extract::State<TestState>,
+    headers: axum::http::HeaderMap,
+) -> Response {
+    let origin = headers
+        .get(axum::http::header::ORIGIN)
+        .and_then(|v| v.to_str().ok());
+    if !state.allow_ws_origin(origin) {
+        return (StatusCode::FORBIDDEN, "origin not allowed").into_response();
+    }
+    StatusCode::NO_CONTENT.into_response()
 }
 
 fn boot_photon() -> Arc<Photon> {
@@ -119,7 +141,10 @@ fn get_request(uri: &str, cookie: Option<&str>) -> Request<Body> {
 #[tokio::test]
 async fn user_missing_identity_returns_401() {
     let (photon, _guard) = boot_photon_locked().await;
-    let state = TestState { photon };
+    let state = TestState {
+        photon,
+        allow_origin: None,
+    };
     let app = probe_router().with_state(state);
 
     let response = app.oneshot(get_request("/probe-auth", None)).await.unwrap();
@@ -130,7 +155,10 @@ async fn user_missing_identity_returns_401() {
 #[tokio::test]
 async fn user_key_mismatch_returns_403() {
     let (photon, _guard) = boot_photon_locked().await;
-    let state = TestState { photon };
+    let state = TestState {
+        photon,
+        allow_origin: None,
+    };
     let app = probe_router().with_state(state);
 
     let response = app
@@ -153,7 +181,10 @@ async fn user_key_mismatch_returns_403() {
 #[tokio::test]
 async fn user_matching_key_ok() {
     let (photon, _guard) = boot_photon_locked().await;
-    let state = TestState { photon };
+    let state = TestState {
+        photon,
+        allow_origin: None,
+    };
     let app = probe_router().with_state(state);
 
     let response = app
@@ -162,6 +193,47 @@ async fn user_matching_key_ok() {
         .unwrap();
 
     assert_eq!(response.status(), StatusCode::NO_CONTENT);
+}
+
+#[tokio::test]
+async fn user_without_client_key_uses_session_key() {
+    let (photon, _guard) = boot_photon_locked().await;
+    let state = TestState {
+        photon,
+        allow_origin: None,
+    };
+    let app = probe_router().with_state(state);
+
+    let response = app
+        .oneshot(get_request("/probe-auth", Some("e2e_user=1234")))
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::NO_CONTENT);
+}
+
+#[tokio::test]
+async fn rejected_origin_returns_403() {
+    let (photon, _guard) = boot_photon_locked().await;
+    let state = TestState {
+        photon,
+        allow_origin: Some(false),
+    };
+    let app = probe_router().with_state(state);
+
+    let request = Request::builder()
+        .uri("/probe-origin")
+        .method("GET")
+        .header("origin", "https://evil.example")
+        .body(Body::empty())
+        .unwrap();
+    let response = app.oneshot(request).await.unwrap();
+
+    assert_eq!(response.status(), StatusCode::FORBIDDEN);
+    let body = axum::body::to_bytes(response.into_body(), 1024)
+        .await
+        .expect("body");
+    assert_eq!(String::from_utf8_lossy(&body), "origin not allowed");
 }
 
 #[tokio::test]
