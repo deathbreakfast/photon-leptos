@@ -6,6 +6,9 @@ description = "WebSocket + Leptos integration benchmarks (BM-PLS*)"
 publish = false
 default-run = "photon-leptos-bench"
 
+[lints]
+workspace = true
+
 [[bin]]
 name = "photon-leptos-bench"
 path = "src/main.rs"

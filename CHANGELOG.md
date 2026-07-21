@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Subscribe key UTF-8 round-trip decode with [`MAX_KEY_LEN`](photon-axum) (256 bytes); malformed encodings rejected.
 - Benchmark control-plane auth (`BENCH_CONTROL_TOKEN` / `BENCH_CONTROL_OPEN`), publish caps, and single in-flight publish run.
 - CI jobs for `fmt`, `doc`, `package`, and wasm `hydrate` check; removed global GitHub token URL rewrite.
+- CI jobs for [`leptos-lints`](https://github.com/leptos-rs/leptos-lints) (`cargo dylint`) on hydrate UI crates and `cargo audit`.
 
 ### Changed
 
@@ -26,11 +27,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `WsAuthMode::None` docs clarify optional client-selected `?key=` (not pure broadcast-only).
 - `photon-leptos` path dependencies declare `version` for crates.io packaging.
 - `WsFanoutMode::from_env` returns `Result` (unknown env values are errors).
+- Workspace Clippy policy: drop blanket `pedantic`/`nursery`; enable `clippy::all`, selected pedantic lints, and restriction lints (`unwrap_used`, `expect_used`, `dbg_macro`, `print_*`, …).
+- [`KeyResolveError`](photon-axum) / [`FanoutConfigError`](photon-axum) use `thiserror`.
+- [`photon-leptos`](photon-leptos) client logging migrated from `log` to `tracing`; e2e demo initializes `tracing_subscriber` (SSR) and `tracing-wasm` (hydrate).
+- Append initial fetch uses `spawn_local_scoped` (leptos-lints).
 
 ### Security
 
 - Origin policy hook and key length bounds for WebSocket upgrades.
 - 403 key-mismatch responses no longer echo partition identifiers.
+- `cargo audit` runs on every PR/push.
 
 ## [0.1.0] - 2026-07-19
 

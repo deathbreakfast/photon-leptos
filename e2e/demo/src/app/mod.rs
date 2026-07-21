@@ -19,7 +19,7 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
                 <meta name="viewport" content="width=device-width, initial-scale=1"/>
                 <title>"photon-leptos E2E"</title>
                 <AutoReload options=options.clone() />
-                <HydrationScripts options=options.clone() />
+                <HydrationScripts options=options />
             </head>
             <body>
                 <App/>

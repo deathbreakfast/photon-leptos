@@ -230,12 +230,12 @@ pub fn synced_impl(attr: TokenStream, item: TokenStream) -> TokenStream {
         "none" => quote! { photon_leptos::server::WsAuthMode::None },
         "user" => quote! { photon_leptos::server::WsAuthMode::User },
         other => {
-            return syn::Error::new_spanned(
-                synced_attrs.auth.as_ref().unwrap(),
-                format!("invalid auth mode \"{other}\": expected \"none\" or \"user\""),
-            )
-            .to_compile_error()
-            .into();
+            let msg = format!("invalid auth mode \"{other}\": expected \"none\" or \"user\"");
+            let err = match &synced_attrs.auth {
+                Some(auth) => syn::Error::new_spanned(auth, msg),
+                None => syn::Error::new_spanned(&synced_attrs.topic, msg),
+            };
+            return err.to_compile_error().into();
         }
     };
 
@@ -375,6 +375,7 @@ pub fn synced_impl(attr: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::{fn_name_to_ws_path, result_ok_type, return_type_is_result_of_vec};
     use syn::parse_quote;

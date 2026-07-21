@@ -66,14 +66,20 @@
 //! assert!(matches!(err, KeyResolveError::KeyMismatch { .. }));
 //! ```
 
+use thiserror::Error;
+
 use super::descriptor::WsAuthMode;
 
 /// Failure resolving a subscribe key for a WebSocket upgrade.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Error)]
 pub enum KeyResolveError {
     /// `auth = "user"` but the extractor returned no user key.
+    #[error("auth=user requires an authenticated user key")]
     MissingUser,
     /// Client `?key=` did not equal the authenticated `user_key`.
+    ///
+    /// Display / [`Self::client_message`] never include raw key material (SEC-001).
+    #[error("key does not match authenticated scope")]
     KeyMismatch {
         /// Key from the host auth extractor.
         user_key: String,
@@ -81,22 +87,6 @@ pub enum KeyResolveError {
         client_key: String,
     },
 }
-
-impl std::fmt::Display for KeyResolveError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::MissingUser => {
-                write!(f, "auth=user requires an authenticated user key")
-            }
-            Self::KeyMismatch { .. } => {
-                // Do not reflect raw keys to clients (SEC-001).
-                write!(f, "key does not match authenticated scope")
-            }
-        }
-    }
-}
-
-impl std::error::Error for KeyResolveError {}
 
 impl KeyResolveError {
     /// Client-facing HTTP body (never includes raw key material).
@@ -142,6 +132,7 @@ fn resolve_user_mode(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
 

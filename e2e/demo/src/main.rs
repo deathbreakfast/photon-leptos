@@ -11,6 +11,13 @@ use photon_leptos_e2e_demo::{shell, App, AppState, CounterStore, E2eUserAuth};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info")),
+        )
+        .init();
+
     let conf = get_configuration(None).map_err(|e| anyhow::anyhow!("{e}"))?;
     let leptos_options = conf.leptos_options;
     let addr = leptos_options.site_addr;
@@ -39,7 +46,7 @@ async fn main() -> anyhow::Result<()> {
 
     let app = ws_router::<AppState, E2eUserAuth>(app).with_state(app_state);
 
-    log::info!("E2E demo listening on http://{addr}");
+    tracing::info!(%addr, "E2E demo listening");
     let listener = tokio::net::TcpListener::bind(&addr).await?;
     axum::serve(listener, app).await?;
     Ok(())

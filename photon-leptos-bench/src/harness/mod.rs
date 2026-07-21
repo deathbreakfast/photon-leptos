@@ -4,6 +4,6 @@ mod capture;
 
 pub use capture::HardwareDetail;
 
-pub fn capture_hardware() -> anyhow::Result<HardwareDetail> {
+pub fn capture_hardware() -> HardwareDetail {
     capture::capture()
 }

@@ -58,6 +58,60 @@ jobs:
         working-directory: photon-leptos
         run: cargo clippy --workspace --all-targets --features ssr -- -D warnings
 
+  leptos-lints:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: photon-leptos
+
+      - uses: actions/checkout@v4
+        with:
+          repository: unified-field-dev/photon
+          path: photon
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustc-dev, llvm-tools-preview
+          targets: wasm32-unknown-unknown
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: photon-leptos
+          prefix-key: dylint
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-dylint,dylint-link
+
+      # leptos-lints@v0.1.2 pins nightly-2025-05-14; full workspace `--features ssr`
+      # fails on newer transitive crates (e.g. zerocopy). Lint hydrate UI crates with
+      # `--no-deps` where Leptos API lints apply. The e2e demo needs wasm32 so
+      # target-specific `web-sys` deps resolve.
+      - name: cargo dylint (leptos-lints)
+        working-directory: photon-leptos
+        run: |
+          cargo dylint --all -p photon-leptos --no-deps -- --features hydrate
+          rustup target add wasm32-unknown-unknown --toolchain nightly-2025-05-14
+          cargo dylint --all -p photon-leptos-e2e-demo --no-deps -- --features hydrate --target wasm32-unknown-unknown
+
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: photon-leptos
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-audit
+
+      - name: cargo audit
+        working-directory: photon-leptos
+        run: cargo audit
+
   test:
     runs-on: ubuntu-latest
     steps:

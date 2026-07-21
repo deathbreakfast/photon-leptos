@@ -1,5 +1,12 @@
 //! photon-leptos integration benchmarks (BM-PLS*).
 
+#![allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::print_stdout,
+    clippy::print_stderr
+)]
+
 pub mod cli;
 pub mod client;
 pub mod experiments;

@@ -1,6 +1,7 @@
 //! HTTP probes for auth + key resolution (no browser / no WS upgrade handshake).
 
 #![cfg(feature = "ssr")]
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 
 use std::sync::Arc;
 
