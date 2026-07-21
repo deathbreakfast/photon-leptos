@@ -22,11 +22,15 @@ Match CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)):
 ```bash
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets --features ssr -- -D warnings
-# Requires: cargo install cargo-dylint dylint-link
-# leptos-lints pins an older nightly; lint hydrate UI crates with --no-deps
-cargo dylint --all -p photon-leptos --no-deps -- --features hydrate
+# Requires: cargo install cargo-dylint --locked --version 6.0.1
+#           cargo install dylint-link --locked --version 6.0.1
+# (install from crates.io; avoid prebuilts that bake DYLINT_DRIVER_MANIFEST_DIR)
+# leptos-lints pins nightly-2025-05-14; lint hydrate UI crates with --no-deps
+CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS=fallback \
+  cargo dylint --all -p photon-leptos --no-deps -- --features hydrate
 # Needs: rustup target add wasm32-unknown-unknown --toolchain nightly-2025-05-14
-cargo dylint --all -p photon-leptos-e2e-demo --no-deps -- --features hydrate --target wasm32-unknown-unknown
+CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS=fallback \
+  cargo dylint --all -p photon-leptos-e2e-demo --no-deps -- --features hydrate --target wasm32-unknown-unknown
 cargo audit
 cargo test -p photon-axum -p photon-leptos -p photon-leptos-macros -p photon-leptos-bench --features ssr
 RUSTDOCFLAGS="-D warnings" cargo doc --workspace --all-features --no-deps

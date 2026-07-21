@@ -166,9 +166,12 @@ CI runs on every push and PR ([`.github/workflows/ci.yml`](.github/workflows/ci.
 ```bash
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets --features ssr -- -D warnings
-# Requires: cargo install cargo-dylint dylint-link
-cargo dylint --all -p photon-leptos --no-deps -- --features hydrate
-cargo dylint --all -p photon-leptos-e2e-demo --no-deps -- --features hydrate --target wasm32-unknown-unknown
+# Requires: cargo install cargo-dylint --locked --version 6.0.1
+#           cargo install dylint-link --locked --version 6.0.1
+CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS=fallback \
+  cargo dylint --all -p photon-leptos --no-deps -- --features hydrate
+CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS=fallback \
+  cargo dylint --all -p photon-leptos-e2e-demo --no-deps -- --features hydrate --target wasm32-unknown-unknown
 cargo audit
 cargo test -p photon-axum -p photon-leptos -p photon-leptos-macros -p photon-leptos-bench --features ssr
 RUSTDOCFLAGS="-D warnings" cargo doc --workspace --all-features --no-deps
