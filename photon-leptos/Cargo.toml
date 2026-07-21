@@ -15,7 +15,7 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 cfg-if = { workspace = true }
-log = { workspace = true }
+tracing = { workspace = true }
 futures = { workspace = true }
 
 leptos-use = { workspace = true, optional = true, features = ["use_websocket"] }

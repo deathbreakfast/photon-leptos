@@ -145,12 +145,9 @@ pub async fn spawn_connections(target: &ServerTarget, opts: &ConnectOptions) -> 
         let received = Arc::clone(&received);
         let handle = tokio::spawn(async move {
             let started = Instant::now();
-            let mut url = match target.ws_url() {
-                Ok(u) => u,
-                Err(_) => {
-                    let _ = ready_tx.send(Err(()));
-                    return;
-                }
+            let Ok(mut url) = target.ws_url() else {
+                let _ = ready_tx.send(Err(()));
+                return;
             };
             if let Some(key) = key {
                 url.query_pairs_mut().append_pair("key", &key);
@@ -350,12 +347,9 @@ pub async fn spawn_connections_key_groups(
         let received = Arc::clone(&received);
         let handle = tokio::spawn(async move {
             let started = Instant::now();
-            let mut url = match target.ws_url() {
-                Ok(u) => u,
-                Err(_) => {
-                    let _ = ready_tx.send(Err(()));
-                    return;
-                }
+            let Ok(mut url) = target.ws_url() else {
+                let _ = ready_tx.send(Err(()));
+                return;
             };
             url.query_pairs_mut().append_pair("key", &key);
             let connect =

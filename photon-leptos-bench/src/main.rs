@@ -1,5 +1,12 @@
 //! photon-leptos-bench CLI entry.
 
+#![allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::print_stdout,
+    clippy::print_stderr
+)]
+
 use anyhow::Result;
 use clap::Parser;
 use photon_leptos_bench::cli::{Cli, Command};
@@ -82,7 +89,7 @@ async fn main() -> Result<()> {
             allow_phase2,
         } => {
             let p = validate_hardware(&profile, allow_phase2)?;
-            let detail = harness::capture_hardware()?;
+            let detail = harness::capture_hardware();
             let file = load_profiles()?;
             println!(
                 "{}",

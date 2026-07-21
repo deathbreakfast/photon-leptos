@@ -3,6 +3,7 @@
 //! Photon process globals are exclusive — tests take `PHOTON_TEST_LOCK`.
 
 #![cfg(feature = "ssr")]
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 
 use std::sync::Arc;
 use std::time::Duration;
@@ -11,7 +12,7 @@ use futures::StreamExt;
 use photon::topic;
 use photon::Photon;
 use photon_axum::axum_ws::hub::HUB_QUEUE_CAPACITY;
-use photon_axum::{WsBroadcastHub, WsFanoutMode};
+use photon_axum::{SyncedWsConfig, WsBroadcastHub, WsFanoutMode};
 use tokio::sync::{Mutex, MutexGuard};
 
 static PHOTON_TEST_LOCK: Mutex<()> = Mutex::const_new(());
@@ -67,6 +68,15 @@ fn fanout_mode_parse_and_env() {
     );
     std::env::set_var("PHOTON_AXUM_WS_FANOUT", "nope");
     assert!(WsFanoutMode::from_env().is_err());
+    assert!(
+        SyncedWsConfig::try_new("t", None).is_err(),
+        "try_new must surface invalid PHOTON_AXUM_WS_FANOUT"
+    );
+    assert_eq!(WsFanoutMode::parse("hub"), Some(WsFanoutMode::BroadcastHub));
+    assert_eq!(
+        WsFanoutMode::parse("per-subscribe"),
+        Some(WsFanoutMode::PerSubscribe)
+    );
     match prev {
         Some(v) => std::env::set_var("PHOTON_AXUM_WS_FANOUT", v),
         None => std::env::remove_var("PHOTON_AXUM_WS_FANOUT"),

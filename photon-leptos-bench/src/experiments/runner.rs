@@ -139,7 +139,7 @@ fn base_report(
         pass: false,
         status: "fail",
         error: None,
-        hardware_detail: capture_hardware().ok(),
+        hardware_detail: Some(capture_hardware()),
     }
 }
 

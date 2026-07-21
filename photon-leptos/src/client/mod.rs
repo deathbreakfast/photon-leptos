@@ -228,7 +228,7 @@ pub fn subscribe_ws(
     on_event: impl Fn(serde_json::Value) + Send + Sync + 'static,
 ) -> PhotonWsHandle {
     let url = ws_url_with_key(ws_path, key_filter);
-    log::info!("[photon-leptos] subscribing to WebSocket {}", url);
+    tracing::info!(url = %url, "[photon-leptos] subscribing to WebSocket");
 
     let last_error = RwSignal::new(None::<String>);
     let last_error_for_cb = last_error;
@@ -242,7 +242,7 @@ pub fn subscribe_ws(
                 let url = url.clone();
                 move |err| {
                     let msg = format!("{err:?}");
-                    log::warn!("[photon-leptos] WebSocket error on {}: {}", url, msg);
+                    tracing::warn!(url = %url, error = %msg, "[photon-leptos] WebSocket error");
                     last_error_for_cb.set(Some(msg));
                 }
             }),
@@ -274,13 +274,13 @@ pub fn subscribe_ws(
         if let Some(text) = message.get() {
             match serde_json::from_str::<PhotonEvent>(&text) {
                 Ok(photon_ev) => {
-                    log::info!("[photon-leptos] received event on WS, dispatching");
+                    tracing::info!("[photon-leptos] received event on WS, dispatching");
                     on_event(photon_ev.payload_json);
                 }
                 Err(e) => {
                     let preview: String = text.chars().take(256).collect();
                     let msg = format!("not a Photon event envelope ({e}): {preview:?}");
-                    log::warn!("[photon-leptos] WebSocket message is {msg}");
+                    tracing::warn!(message = %msg, "[photon-leptos] WebSocket message");
                     last_error.set(Some(msg));
                 }
             }
@@ -306,7 +306,13 @@ pub fn subscribe_ws(
 /// * `opts` - Configuration for topic, WebSocket path, and sync strategy
 ///
 /// Only [`crate::SyncStrategy::Refetch`] and [`crate::SyncStrategy::Replace`] are valid here.
-/// [`crate::SyncStrategy::Append`] requires [`synced_resource_append`] and panics if passed.
+/// For appendable lists, call [`synced_resource_append`] instead (the `#[synced]` macro
+/// routes `strategy = "append"` automatically).
+///
+/// # Panics
+///
+/// Panics if `opts.strategy` is [`crate::SyncStrategy::Append`]. That is a programmer
+/// error — use [`synced_resource_append`].
 pub fn synced_resource<F, Fut, T>(fetcher: F, opts: SyncedResourceOpts) -> Resource<T>
 where
     F: Fn() -> Fut + Send + Sync + 'static,
@@ -343,14 +349,14 @@ where
     U: serde::Serialize + serde::de::DeserializeOwned + Send + Sync + Clone + PartialEq + 'static,
     E: Send + Sync + Clone + PartialEq + serde::Serialize + serde::de::DeserializeOwned + 'static,
 {
-    use leptos::task::spawn_local;
+    use leptos::task::spawn_local_scoped;
 
     let data_signal: RwSignal<Option<Result<Vec<U>, E>>> = RwSignal::new(None);
     let pending: RwSignal<Vec<U>> = RwSignal::new(Vec::new());
     let data_clone = data_signal;
     let pending_for_fetch = pending;
 
-    spawn_local(async move {
+    spawn_local_scoped(async move {
         let val = fetcher().await;
         match &val {
             Ok(_) => {
@@ -389,9 +395,9 @@ where
                     pending_for_ws.update(|buf| buf.push(item));
                 }
                 Some(Err(_)) => {
-                    log::warn!(
-                        "[photon-leptos] Append: skipping item on {} (list is in error state)",
-                        ws_path_for_log
+                    tracing::warn!(
+                        ws_path = %ws_path_for_log,
+                        "[photon-leptos] Append: skipping item (list is in error state)"
                     );
                 }
                 Some(Ok(_)) => {
@@ -403,10 +409,10 @@ where
                 }
             },
             Err(e) => {
-                log::warn!(
-                    "[photon-leptos] Append: payload deserialization failed on {} ({})",
-                    ws_path_for_log,
-                    e
+                tracing::warn!(
+                    ws_path = %ws_path_for_log,
+                    error = %e,
+                    "[photon-leptos] Append: payload deserialization failed"
                 );
             }
         },
@@ -446,10 +452,11 @@ where
         },
     );
 
-    log::info!(
-        "[photon-leptos] synced_resource: topic={}, ws_path={}, strategy=Replace",
-        opts.topic,
-        opts.ws_path
+    tracing::info!(
+        topic = %opts.topic,
+        ws_path = %opts.ws_path,
+        strategy = "Replace",
+        "[photon-leptos] synced_resource"
     );
 
     let ws_path_for_log = opts.ws_path.clone();
@@ -459,17 +466,17 @@ where
         key.as_deref(),
         move |payload_json| match serde_json::from_value::<T>(payload_json) {
             Ok(value) => {
-                log::info!(
-                    "[photon-leptos] received event on {}, applying Replace",
-                    ws_path_for_log
+                tracing::info!(
+                    ws_path = %ws_path_for_log,
+                    "[photon-leptos] received event, applying Replace"
                 );
                 direct_value.set(Some(value));
                 trigger.update(|n| *n += 1);
             }
             Err(e) => {
-                log::warn!(
-                    "[photon-leptos] Replace: payload deserialization failed ({}), falling back to refetch",
-                    e
+                tracing::warn!(
+                    error = %e,
+                    "[photon-leptos] Replace: payload deserialization failed, falling back to refetch"
                 );
                 direct_value.set(None);
                 trigger.update(|n| *n += 1);
@@ -509,10 +516,11 @@ where
         },
     );
 
-    log::info!(
-        "[photon-leptos] synced_resource: topic={}, ws_path={}, strategy=Replace (Result Ok payload)",
-        opts.topic,
-        opts.ws_path
+    tracing::info!(
+        topic = %opts.topic,
+        ws_path = %opts.ws_path,
+        strategy = "Replace",
+        "[photon-leptos] synced_resource (Result Ok payload)"
     );
 
     let ws_path_for_log = opts.ws_path.clone();
@@ -522,17 +530,17 @@ where
         key.as_deref(),
         move |payload_json| match serde_json::from_value::<T>(payload_json) {
             Ok(value) => {
-                log::info!(
-                    "[photon-leptos] received event on {}, applying Replace Ok",
-                    ws_path_for_log
+                tracing::info!(
+                    ws_path = %ws_path_for_log,
+                    "[photon-leptos] received event, applying Replace Ok"
                 );
                 direct_value.set(Some(Ok(value)));
                 trigger.update(|n| *n += 1);
             }
             Err(e) => {
-                log::warn!(
-                    "[photon-leptos] Replace: Ok-payload deserialization failed ({}), falling back to refetch",
-                    e
+                tracing::warn!(
+                    error = %e,
+                    "[photon-leptos] Replace: Ok-payload deserialization failed, falling back to refetch"
                 );
                 direct_value.set(None);
                 trigger.update(|n| *n += 1);
@@ -553,18 +561,19 @@ where
 
     let resource = Resource::new(move || trigger.get(), move |_| fetcher());
 
-    log::info!(
-        "[photon-leptos] synced_resource: topic={}, ws_path={}, strategy=Refetch",
-        opts.topic,
-        opts.ws_path
+    tracing::info!(
+        topic = %opts.topic,
+        ws_path = %opts.ws_path,
+        strategy = "Refetch",
+        "[photon-leptos] synced_resource"
     );
 
     let ws_path_for_log = opts.ws_path.clone();
     let key = opts.key_filter.clone();
     subscribe_ws(&opts.ws_path, key.as_deref(), move |_| {
-        log::info!(
-            "[photon-leptos] received event on {}, triggering refetch",
-            ws_path_for_log
+        tracing::info!(
+            ws_path = %ws_path_for_log,
+            "[photon-leptos] received event, triggering refetch"
         );
         trigger.update(|n| *n += 1);
     });

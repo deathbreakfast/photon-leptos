@@ -27,7 +27,9 @@
 //!     ws: WebSocketUpgrade,
 //!     State(state): State<AppState>,
 //! ) -> axum::response::Response {
-//!     let config = SyncedWsConfig::new("notifications.updated", None);
+//!     // Prefer try_new at boot; `new` panics on invalid PHOTON_AXUM_WS_FANOUT.
+//!     let config = SyncedWsConfig::try_new("notifications.updated", None)
+//!         .expect("valid fanout env");
 //!     synced_ws_handler(ws, state.photon_arc(), state.ws_hub(), config).await
 //! }
 //!
@@ -96,30 +98,15 @@ impl WsFanoutMode {
 }
 
 /// Invalid WebSocket fanout configuration.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 pub enum FanoutConfigError {
     /// `PHOTON_AXUM_WS_FANOUT` was set to an unrecognized value.
+    #[error("invalid PHOTON_AXUM_WS_FANOUT={0:?}; expected per_subscribe or broadcast_hub")]
     UnknownEnvValue(String),
     /// [`WsFanoutMode::BroadcastHub`] was requested but no hub is on app state.
+    #[error("PHOTON_AXUM_WS_FANOUT=broadcast_hub requires HasPhoton::ws_hub() to return Some")]
     HubRequiredButMissing,
 }
-
-impl std::fmt::Display for FanoutConfigError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::UnknownEnvValue(v) => write!(
-                f,
-                "invalid PHOTON_AXUM_WS_FANOUT={v:?}; expected per_subscribe or broadcast_hub"
-            ),
-            Self::HubRequiredButMissing => write!(
-                f,
-                "PHOTON_AXUM_WS_FANOUT=broadcast_hub requires HasPhoton::ws_hub() to return Some"
-            ),
-        }
-    }
-}
-
-impl std::error::Error for FanoutConfigError {}
 
 /// Configuration for a WebSocket endpoint that forwards Photon events.
 ///

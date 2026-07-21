@@ -1,6 +1,7 @@
 //! Client Close must clear hub membership without waiting for a publish.
 
 #![cfg(feature = "ssr")]
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 
 use std::sync::Arc;
 use std::time::Duration;

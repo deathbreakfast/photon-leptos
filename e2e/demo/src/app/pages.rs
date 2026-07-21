@@ -30,11 +30,7 @@ fn sync_cookies(namespace: &str, user: Option<&str>, key: Option<&str>) {
 
 fn query_param(name: &str) -> Option<String> {
     let query = use_query_map();
-    query
-        .get()
-        .get(name)
-        .filter(|s| !s.is_empty())
-        .map(|s| s.to_string())
+    query.get().get(name).filter(|s| !s.is_empty())
 }
 
 #[component]

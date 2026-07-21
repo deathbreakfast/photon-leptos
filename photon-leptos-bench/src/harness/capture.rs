@@ -1,6 +1,5 @@
 //! Capture CPU/RAM/OS metadata.
 
-use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::process::Command;
 
@@ -13,14 +12,14 @@ pub struct HardwareDetail {
     pub root_mount: String,
 }
 
-pub fn capture() -> Result<HardwareDetail> {
-    Ok(HardwareDetail {
+pub fn capture() -> HardwareDetail {
+    HardwareDetail {
         cpu_model: read_cpu_model(),
         cpu_cores: std::thread::available_parallelism().map_or(1, std::num::NonZero::get),
         ram_gib: read_ram_gib(),
         os: read_os_string(),
         root_mount: read_root_mount(),
-    })
+    }
 }
 
 fn read_cpu_model() -> String {
@@ -80,6 +79,5 @@ fn read_root_mount() -> String {
                 })
                 .map(|l| l.split_whitespace().next().unwrap_or("unknown").to_string())
         })
-        .context("root mount")
-        .unwrap_or_else(|_| "unknown".into())
+        .unwrap_or_else(|| "unknown".into())
 }

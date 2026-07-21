@@ -1,6 +1,7 @@
 //! Replace with `Result<T, E>` deserializes event payload as `T` (COR-004).
 
 #![cfg(feature = "hydrate")]
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 
 use photon_leptos::{synced_resource_replace_result, SyncStrategy, SyncedResourceOpts};
 use serde::{Deserialize, Serialize};

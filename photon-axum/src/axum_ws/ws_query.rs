@@ -89,6 +89,7 @@ fn from_hex(b: u8) -> Option<u8> {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
 
@@ -149,6 +150,13 @@ mod tests {
         assert_eq!(client_key_from_uri(&uri), None);
         let truncated: Uri = "/ws/x?key=%C3".parse().unwrap();
         assert_eq!(client_key_from_uri(&truncated), None);
+    }
+
+    #[test]
+    fn rejects_invalid_utf8_after_decode() {
+        // Lone continuation byte — valid hex decode, invalid UTF-8.
+        let uri: Uri = "/ws/x?key=%80".parse().unwrap();
+        assert_eq!(client_key_from_uri(&uri), None);
     }
 
     #[test]
