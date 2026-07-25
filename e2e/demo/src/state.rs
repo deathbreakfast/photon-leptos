@@ -105,6 +105,10 @@ impl HasPhoton for AppState {
     fn photon_arc(&self) -> Arc<Photon> {
         Arc::clone(&self.photon)
     }
+
+    fn allow_ws_origin(&self, _origin: Option<&str>) -> bool {
+        true
+    }
 }
 
 impl FromRef<AppState> for LeptosOptions {

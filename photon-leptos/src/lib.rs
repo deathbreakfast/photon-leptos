@@ -157,6 +157,8 @@
 //!
 //! App state must implement [`photon_axum::HasPhoton`]. Call [`photon_axum::ws_router`]
 //! (re-exported from [`server`]) so inventory routes like `/ws/notifications` are mounted:
+//! production hosts must also implement an Origin allowlist because the default
+//! rejects all WebSocket origins.
 //!
 //! ```rust,ignore
 //! use std::sync::Arc;
@@ -175,8 +177,9 @@
 //!         Arc::clone(&self.photon)
 //!     }
 //!
-//!     // Optional: reject cross-site WS upgrades for cookie-auth hosts.
-//!     // fn allow_ws_origin(&self, origin: Option<&str>) -> bool { … }
+//!     fn allow_ws_origin(&self, origin: Option<&str>) -> bool {
+//!         matches!(origin, Some("https://app.example.com"))
+//!     }
 //! }
 //!
 //! #[tokio::main]

@@ -246,11 +246,18 @@ pub fn synced_impl(attr: TokenStream, item: TokenStream) -> TokenStream {
                 ws: axum::extract::ws::WebSocketUpgrade,
                 axum::extract::State(state): axum::extract::State<S>,
                 uri: axum::http::Uri,
+                headers: axum::http::HeaderMap,
             ) -> axum::response::Response
             where
                 S: photon_leptos::server::HasPhoton + Clone + Send + Sync + 'static,
             {
                 use axum::response::IntoResponse;
+                if !photon_leptos::server::HasPhoton::allow_ws_origin(
+                    &state,
+                    photon_leptos::server::origin_from_headers(&headers),
+                ) {
+                    return photon_leptos::server::reject_origin();
+                }
                 let client_key = photon_leptos::server::client_key_from_uri(&uri);
                 let key_filter = match photon_leptos::server::resolve_subscribe_key(
                     photon_leptos::server::WsAuthMode::None,
@@ -279,6 +286,7 @@ pub fn synced_impl(attr: TokenStream, item: TokenStream) -> TokenStream {
                 auth: Auth,
                 axum::extract::State(state): axum::extract::State<S>,
                 uri: axum::http::Uri,
+                headers: axum::http::HeaderMap,
             ) -> axum::response::Response
             where
                 S: photon_leptos::server::HasPhoton + Clone + Send + Sync + 'static,
@@ -288,6 +296,12 @@ pub fn synced_impl(attr: TokenStream, item: TokenStream) -> TokenStream {
                     + 'static,
             {
                 use axum::response::IntoResponse;
+                if !photon_leptos::server::HasPhoton::allow_ws_origin(
+                    &state,
+                    photon_leptos::server::origin_from_headers(&headers),
+                ) {
+                    return photon_leptos::server::reject_origin();
+                }
                 let client_key = photon_leptos::server::client_key_from_uri(&uri);
                 let user_key = auth.user_key();
                 let key_filter = match photon_leptos::server::resolve_subscribe_key(

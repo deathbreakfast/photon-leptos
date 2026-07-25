@@ -24,6 +24,6 @@ pub use auth::{HeadlessWsAuth, PhotonUserExtractor};
 pub use descriptor::{WsAuthMode, WsRouteDescriptor};
 pub use hub::WsBroadcastHub;
 pub use key_resolve::{resolve_subscribe_key, KeyResolveError};
-pub use routes::apply_ws_routes;
+pub use routes::{apply_ws_routes, origin_from_headers, reject_origin};
 pub use state::HasPhoton;
 pub use ws::{synced_ws_handler, FanoutConfigError, SyncedWsConfig, WsFanoutMode};

@@ -21,9 +21,12 @@ pub trait HasPhoton: Clone + Send + Sync + 'static {
 
     /// Optional WebSocket `Origin` policy (SEC-002).
     ///
-    /// Return `false` to reject the upgrade with 403. Default allows all origins
-    /// (suitable for demos). Cookie-authenticated hosts should override this.
+    /// Return `true` only for allowed origins. Hosts MUST override this with an
+    /// allowlist for cookie-authenticated production deployments. Demos and
+    /// tests that intentionally allow all origins must override this explicitly.
+    ///
+    /// Returns `false` by default, rejecting upgrades with 403.
     fn allow_ws_origin(&self, _origin: Option<&str>) -> bool {
-        true
+        false
     }
 }

@@ -26,9 +26,9 @@
 
 #[cfg(feature = "ssr")]
 pub use photon_axum::{
-    apply_ws_routes, resolve_subscribe_key, synced_ws_handler, ws_router, HasPhoton,
-    HeadlessWsAuth, KeyResolveError, PhotonUserExtractor, SyncedWsConfig, WsAuthMode,
-    WsBroadcastHub, WsFanoutMode, WsRouteDescriptor,
+    apply_ws_routes, origin_from_headers, reject_origin, resolve_subscribe_key, synced_ws_handler,
+    ws_router, HasPhoton, HeadlessWsAuth, KeyResolveError, PhotonUserExtractor, SyncedWsConfig,
+    WsAuthMode, WsBroadcastHub, WsFanoutMode, WsRouteDescriptor,
 };
 
 #[cfg(feature = "ssr")]

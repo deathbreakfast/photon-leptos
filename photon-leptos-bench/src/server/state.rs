@@ -39,4 +39,8 @@ impl HasPhoton for BenchState {
     fn ws_hub(&self) -> Option<Arc<WsBroadcastHub>> {
         Some(Arc::clone(&self.hub))
     }
+
+    fn allow_ws_origin(&self, _origin: Option<&str>) -> bool {
+        true
+    }
 }

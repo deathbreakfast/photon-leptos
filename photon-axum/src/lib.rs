@@ -7,8 +7,10 @@
 //! ## Boot checklist
 //!
 //! 1. App state implements [`HasPhoton`] with `Arc<photon::Photon>`.
-//! 2. Binary links crates that use `#[photon_leptos::synced]` (inventory submit).
-//! 3. Call [`ws_router`]::<`S`, `Auth`>(app) before serving.
+//! 2. App state overrides [`HasPhoton::allow_ws_origin`] with a production Origin
+//!    allowlist. The default rejects every origin.
+//! 3. Binary links crates that use `#[photon_leptos::synced]` (inventory submit).
+//! 4. Call [`ws_router`]::<`S`, `Auth`>(app) before serving.
 //!
 //! ```rust,ignore
 //! use photon_axum::{HeadlessWsAuth, ws_router};
@@ -30,9 +32,9 @@
 pub mod axum_ws;
 
 pub use axum_ws::{
-    apply_ws_routes, resolve_subscribe_key, synced_ws_handler, FanoutConfigError, HasPhoton,
-    HeadlessWsAuth, KeyResolveError, PhotonUserExtractor, SyncedWsConfig, WsAuthMode,
-    WsBroadcastHub, WsFanoutMode, WsRouteDescriptor,
+    apply_ws_routes, origin_from_headers, reject_origin, resolve_subscribe_key, synced_ws_handler,
+    FanoutConfigError, HasPhoton, HeadlessWsAuth, KeyResolveError, PhotonUserExtractor,
+    SyncedWsConfig, WsAuthMode, WsBroadcastHub, WsFanoutMode, WsRouteDescriptor,
 };
 
 use axum::Router;

@@ -40,13 +40,15 @@ where
     r
 }
 
-fn origin_from_headers(headers: &HeaderMap) -> Option<&str> {
+/// Return the valid `Origin` header value, if present.
+pub fn origin_from_headers(headers: &HeaderMap) -> Option<&str> {
     headers
         .get(axum::http::header::ORIGIN)
         .and_then(|v| v.to_str().ok())
 }
 
-fn reject_origin() -> Response {
+/// Produce the standard response for a rejected WebSocket origin.
+pub fn reject_origin() -> Response {
     (StatusCode::FORBIDDEN, "origin not allowed").into_response()
 }
 

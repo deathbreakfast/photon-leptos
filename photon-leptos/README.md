@@ -8,6 +8,12 @@ Leptos client hooks and server re-exports for Photon realtime UI.
 
 **Integrator wiring:** [`photon-axum`](../photon-axum/README.md) for `ws_router`, auth, Origin, and fanout.
 
+## Host responsibilities
+
+Production hosts MUST implement `HasPhoton::allow_ws_origin` with an Origin
+allowlist before mounting WebSocket routes. The default rejects all origins;
+only demos and tests should explicitly opt into allow-all behavior.
+
 ## Status (0.1 experimental)
 
 | Strategy | Contract |

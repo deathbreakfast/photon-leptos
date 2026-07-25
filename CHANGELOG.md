@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Status / guarantees** documentation for 0.1 experimental delivery (Refetch supported; Replace experimental; Append best-effort).
 - [`PhotonWsHandle`](photon-leptos) — `subscribe_ws` now returns connection `status`, `last_error`, and `close()`; [`PhotonSubscription`](photon-leptos) exposes the same signals.
 - [`synced_resource_replace_result`](photon-leptos) — Replace for `Result<T, E>` server functions deserializes the event payload as `T` (macro routes automatically).
-- [`HasPhoton::allow_ws_origin`](photon-axum) — optional WebSocket Origin policy hook (default allows all).
+- [`HasPhoton::allow_ws_origin`](photon-axum) — WebSocket Origin policy hook.
 - [`FanoutConfigError`](photon-axum) / [`SyncedWsConfig::try_new`](photon-axum) — invalid `PHOTON_AXUM_WS_FANOUT` and hub-without-state fail loudly (503 / config error).
 - Subscribe key UTF-8 round-trip decode with [`MAX_KEY_LEN`](photon-axum) (256 bytes); malformed encodings rejected.
 - Benchmark control-plane auth (`BENCH_CONTROL_TOKEN` / `BENCH_CONTROL_OPEN`), publish caps, and single in-flight publish run.
@@ -27,6 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `WsAuthMode::None` docs clarify optional client-selected `?key=` (not pure broadcast-only).
 - `photon-leptos` path dependencies declare `version` for crates.io packaging.
 - `WsFanoutMode::from_env` returns `Result` (unknown env values are errors).
+- `HasPhoton::allow_ws_origin` now denies all origins by default. Production hosts
+  must explicitly implement an Origin allowlist; demos and tests must explicitly
+  opt into allow-all behavior.
 - Workspace Clippy policy: drop blanket `pedantic`/`nursery`; enable `clippy::all`, selected pedantic lints, and restriction lints (`unwrap_used`, `expect_used`, `dbg_macro`, `print_*`, …).
 - [`KeyResolveError`](photon-axum) / [`FanoutConfigError`](photon-axum) use `thiserror`.
 - [`photon-leptos`](photon-leptos) client logging migrated from `log` to `tracing`; e2e demo initializes `tracing_subscriber` (SSR) and `tracing-wasm` (hydrate).

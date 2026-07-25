@@ -23,6 +23,6 @@ We will acknowledge receipt as soon as practical and coordinate a fix and disclo
 
 ## Scope
 
-In scope: vulnerabilities in this repository's published crates and documentation that could cause unsafe production defaults, plus CI/supply-chain issues in this repository.
+In scope: vulnerabilities in this repository's published crates and documentation that could cause unsafe production defaults, including WebSocket Origin handling, plus CI/supply-chain issues in this repository. Hosts must implement `HasPhoton::allow_ws_origin` with their production Origin allowlist; the crate default rejects all origins.
 
 Out of scope: vulnerabilities solely in third-party dependencies unless this project mishandles them in a security-relevant way.

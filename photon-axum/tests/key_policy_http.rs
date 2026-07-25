@@ -15,7 +15,8 @@ use futures::StreamExt;
 use photon::topic;
 use photon::Photon;
 use photon_axum::{
-    resolve_subscribe_key, HasPhoton, KeyResolveError, PhotonUserExtractor, WsAuthMode,
+    origin_from_headers, reject_origin, resolve_subscribe_key, HasPhoton, KeyResolveError,
+    PhotonUserExtractor, WsAuthMode,
 };
 use tokio::sync::{Mutex, MutexGuard};
 use tower::ServiceExt;
@@ -30,8 +31,8 @@ struct TestKeyed {
 #[derive(Clone)]
 struct TestState {
     photon: Arc<Photon>,
-    /// When `Some(false)`, reject all Origins (SEC-002).
-    allow_origin: Option<bool>,
+    /// Explicit Origin allowlist entry; `None` uses the deny-safe default.
+    allow_origin: Option<&'static str>,
 }
 
 impl HasPhoton for TestState {
@@ -39,8 +40,19 @@ impl HasPhoton for TestState {
         Arc::clone(&self.photon)
     }
 
-    fn allow_ws_origin(&self, _origin: Option<&str>) -> bool {
-        self.allow_origin.unwrap_or(true)
+    fn allow_ws_origin(&self, origin: Option<&str>) -> bool {
+        self.allow_origin == origin
+    }
+}
+
+#[derive(Clone)]
+struct DefaultOriginState {
+    photon: Arc<Photon>,
+}
+
+impl HasPhoton for DefaultOriginState {
+    fn photon_arc(&self) -> Arc<Photon> {
+        Arc::clone(&self.photon)
     }
 }
 
@@ -96,19 +108,22 @@ async fn probe_user_key(auth: CookieUser, uri: Uri) -> Response {
 fn probe_router() -> Router<TestState> {
     Router::new()
         .route("/probe-auth", axum::routing::get(probe_user_key))
-        .route("/probe-origin", axum::routing::get(probe_origin))
+        .route(
+            "/probe-origin",
+            axum::routing::get(probe_origin::<TestState>),
+        )
 }
 
 /// Mirrors `routes.rs` origin gate used by inventory-mounted WS handlers.
-async fn probe_origin(
-    axum::extract::State(state): axum::extract::State<TestState>,
+async fn probe_origin<S>(
+    axum::extract::State(state): axum::extract::State<S>,
     headers: axum::http::HeaderMap,
-) -> Response {
-    let origin = headers
-        .get(axum::http::header::ORIGIN)
-        .and_then(|v| v.to_str().ok());
-    if !state.allow_ws_origin(origin) {
-        return (StatusCode::FORBIDDEN, "origin not allowed").into_response();
+) -> Response
+where
+    S: HasPhoton,
+{
+    if !state.allow_ws_origin(origin_from_headers(&headers)) {
+        return reject_origin();
     }
     StatusCode::NO_CONTENT.into_response()
 }
@@ -218,7 +233,7 @@ async fn rejected_origin_returns_403() {
     let (photon, _guard) = boot_photon_locked().await;
     let state = TestState {
         photon,
-        allow_origin: Some(false),
+        allow_origin: Some("https://app.example"),
     };
     let app = probe_router().with_state(state);
 
@@ -235,6 +250,48 @@ async fn rejected_origin_returns_403() {
         .await
         .expect("body");
     assert_eq!(String::from_utf8_lossy(&body), "origin not allowed");
+}
+
+#[tokio::test]
+async fn default_origin_policy_rejects_any_origin() {
+    let (photon, _guard) = boot_photon_locked().await;
+    let state = DefaultOriginState { photon };
+    let app = Router::new()
+        .route(
+            "/probe-origin",
+            axum::routing::get(probe_origin::<DefaultOriginState>),
+        )
+        .with_state(state);
+
+    let request = Request::builder()
+        .uri("/probe-origin")
+        .method("GET")
+        .header("origin", "https://evil.example")
+        .body(Body::empty())
+        .unwrap();
+    let response = app.oneshot(request).await.unwrap();
+
+    assert_eq!(response.status(), StatusCode::FORBIDDEN);
+}
+
+#[tokio::test]
+async fn allowed_origin_proceeds() {
+    let (photon, _guard) = boot_photon_locked().await;
+    let state = TestState {
+        photon,
+        allow_origin: Some("https://app.example"),
+    };
+    let app = probe_router().with_state(state);
+
+    let request = Request::builder()
+        .uri("/probe-origin")
+        .method("GET")
+        .header("origin", "https://app.example")
+        .body(Body::empty())
+        .unwrap();
+    let response = app.oneshot(request).await.unwrap();
+
+    assert_eq!(response.status(), StatusCode::NO_CONTENT);
 }
 
 #[tokio::test]
