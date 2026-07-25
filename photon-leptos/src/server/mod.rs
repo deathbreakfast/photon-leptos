@@ -1,7 +1,7 @@
 //! Server-side WebSocket integration for Photon-backed Leptos apps.
 //!
 //! Re-exports [`photon_axum`] types so app crates depend on a single `photon-leptos`
-//! facade for both client hooks and server registration.
+//! surface for both client hooks and server registration.
 //!
 //! ## Boot sequence
 //!
