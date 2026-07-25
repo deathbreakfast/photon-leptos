@@ -14,10 +14,10 @@
   "pass": true,
   "status": "pass",
   "hardware_detail": {
-    "cpu_model": "11th Gen Intel(R) Core(TM) i7-11700KF @ 3.60GHz",
+    "cpu_model": "x86_64 lab workstation (redacted)",
     "cpu_cores": 16,
-    "ram_gib": 19.53091049194336,
-    "os": "Linux 6.18.33.2-microsoft-standard-WSL2 (Ubuntu 22.04.5 LTS)",
-    "root_mount": "/dev/sdd"
+    "ram_gib": 19.5,
+    "os": "Linux (lab / local smoke)",
+    "root_mount": "redacted"
   }
 }
