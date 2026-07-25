@@ -10,13 +10,16 @@
 use std::net::SocketAddr;
 
 use photon_axum::WsFanoutMode;
-use photon_leptos_bench::server::{build_photon, build_router, BenchState};
+use photon_leptos_bench::server::{
+    build_photon, build_router, ensure_bench_bind_allowed, BenchState,
+};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let addr: SocketAddr = std::env::var("BENCH_ADDR")
         .unwrap_or_else(|_| "127.0.0.1:8080".into())
         .parse()?;
+    ensure_bench_bind_allowed(addr).map_err(anyhow::Error::msg)?;
 
     // Loopback demos: open control plane unless a token is configured (SEC-005).
     if addr.ip().is_loopback() && std::env::var("BENCH_CONTROL_TOKEN").is_err() {

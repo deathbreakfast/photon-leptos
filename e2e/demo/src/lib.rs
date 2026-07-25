@@ -1,6 +1,8 @@
 pub mod app;
 #[cfg(feature = "ssr")]
 pub mod auth;
+#[cfg(feature = "ssr")]
+pub mod bind_guard;
 pub mod counter;
 #[cfg(feature = "ssr")]
 pub mod photon_boot;
@@ -11,6 +13,8 @@ pub use app::{shell, App};
 
 #[cfg(feature = "ssr")]
 pub use auth::E2eUserAuth;
+#[cfg(feature = "ssr")]
+pub use bind_guard::{ensure_demo_bind_allowed, DEMO_ALLOW_INSECURE_ENV};
 #[cfg(feature = "ssr")]
 pub use state::{AppState, CounterStore};
 

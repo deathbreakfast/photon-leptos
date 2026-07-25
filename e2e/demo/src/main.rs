@@ -7,7 +7,9 @@ use leptos_axum::{file_and_error_handler, generate_route_list, LeptosRoutes};
 use photon_axum::ws_router;
 use photon_leptos_e2e_demo::counter::api_routes;
 use photon_leptos_e2e_demo::photon_boot::build_photon;
-use photon_leptos_e2e_demo::{shell, App, AppState, CounterStore, E2eUserAuth};
+use photon_leptos_e2e_demo::{
+    ensure_demo_bind_allowed, shell, App, AppState, CounterStore, E2eUserAuth,
+};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -21,6 +23,7 @@ async fn main() -> anyhow::Result<()> {
     let conf = get_configuration(None).map_err(|e| anyhow::anyhow!("{e}"))?;
     let leptos_options = conf.leptos_options;
     let addr = leptos_options.site_addr;
+    ensure_demo_bind_allowed(addr).map_err(anyhow::Error::msg)?;
     let routes = generate_route_list(App);
 
     let photon = build_photon()?;

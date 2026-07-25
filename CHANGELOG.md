@@ -40,6 +40,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Origin policy hook and key length bounds for WebSocket upgrades.
 - 403 key-mismatch responses no longer echo partition identifiers.
 - `cargo audit` runs on every PR/push.
+- `HasPhoton::allow_ws_origin` defaults to deny-all; inventory `ws_router` and macro manual handlers share the Origin gate.
+- E2E demo and bench server refuse non-loopback binds unless explicitly opted in (`PHOTON_LEPTOS_DEMO_ALLOW_INSECURE` / `PHOTON_LEPTOS_BENCH_ALLOW_NONLOCAL`).
+- Production implementer checklist expanded in [`SECURITY.md`](SECURITY.md).
 
 ## [0.1.0] - 2026-07-19
 

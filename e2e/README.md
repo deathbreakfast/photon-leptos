@@ -26,6 +26,8 @@ e2e/
 
 ## Demo server
 
+**Not for production.** The demo uses insecure defaults (allow-all Origin, query-param identity cookies). It binds loopback only unless `PHOTON_LEPTOS_DEMO_ALLOW_INSECURE=1`. See [`SECURITY.md`](../SECURITY.md).
+
 | Piece | Description |
 |-------|-------------|
 | Photon boot | In-process `mem` via `Photon::builder().auto_registry().build()` |
@@ -33,6 +35,7 @@ e2e/
 | Router | `ws_router::<AppState, E2eUserAuth>(app)` |
 | Broadcast topic | `counter.updated` → `/ws/counter` (`auth = none`) |
 | Keyed topic | `counter.keyed.updated` (`keyed_by = partition`) |
+| Bind guard | Non-loopback requires `PHOTON_LEPTOS_DEMO_ALLOW_INSECURE=1` |
 
 ### Pages
 

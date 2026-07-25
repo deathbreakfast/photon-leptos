@@ -21,8 +21,59 @@ Include:
 
 We will acknowledge receipt as soon as practical and coordinate a fix and disclosure timeline with you.
 
+## Threat model (bridge)
+
+photon-leptos / photon-axum expose Photon topics to browsers over WebSockets. The bridge does **not** replace host authentication, topic ACLs, or CSRF protection for server functions.
+
+Photon core threat model and broker/crypto checklist: see the **photon** repository `SECURITY.md`.
+
+## Production checklist for implementers
+
+### WebSocket Origin (required)
+
+| Check | How |
+|-------|-----|
+| Allowlist Origins | Override [`HasPhoton::allow_ws_origin`](photon-axum/src/axum_ws/state.rs) for every production app state |
+| Default is deny | The trait default returns `false` (rejects missing and unknown Origins) |
+| Inventory and macro handlers | Both `ws_router` and `#[synced]` manual handlers enforce the same Origin gate |
+| Demos only | Explicit `allow_ws_origin → true` is for local demo/bench; never ship that override |
+
+```rust,ignore
+impl HasPhoton for AppState {
+    fn photon_arc(&self) -> Arc<Photon> { Arc::clone(&self.photon) }
+
+    fn allow_ws_origin(&self, origin: Option<&str>) -> bool {
+        matches!(origin, Some("https://app.example.com"))
+    }
+}
+```
+
+Forbidden Origin upgrades return **403** with a stable message (keys are not echoed).
+
+### Auth, cookies, and mutations
+
+| Check | How |
+|-------|-----|
+| `auth = "user"` routes | Implement `PhotonUserExtractor` from trusted session/JWT context |
+| Cookie flags | `Secure`, `HttpOnly`, `SameSite` on session cookies |
+| CSRF | Protect state-changing server functions; Origin alone is not a full CSRF strategy |
+| Key policy | Subscribe keys are UTF-8, max 256 bytes after percent-decode; mismatch responses do not echo raw keys |
+
+### Demo and bench (do not deploy)
+
+| Binary | Guard |
+|--------|-------|
+| `e2e/demo` | Refuses non-loopback bind unless `PHOTON_LEPTOS_DEMO_ALLOW_INSECURE=1` |
+| `photon-leptos-bench` server | Refuses non-loopback bind unless `PHOTON_LEPTOS_BENCH_ALLOW_NONLOCAL=1` |
+
+Both intentionally use insecure defaults (allow-all Origin, demo identity cookies, open bench data plane on loopback). They are CI / lab tools only.
+
+### Host edge still required
+
+Authenticate and authorize before mounting Photon WS routes. Connection, group, and rate limits are host-owned. TLS termination is host/load-balancer owned.
+
 ## Scope
 
-In scope: vulnerabilities in this repository's published crates and documentation that could cause unsafe production defaults, including WebSocket Origin handling, plus CI/supply-chain issues in this repository. Hosts must implement `HasPhoton::allow_ws_origin` with their production Origin allowlist; the crate default rejects all origins.
+In scope: vulnerabilities in this repository's published crates and documentation that could cause unsafe production defaults, including WebSocket Origin handling, plus CI/supply-chain issues in this repository.
 
-Out of scope: vulnerabilities solely in third-party dependencies unless this project mishandles them in a security-relevant way.
+Out of scope: vulnerabilities solely in third-party dependencies unless this project mishandles them in a security-relevant way; Photon core broker/crypto (documented in the photon repo).
