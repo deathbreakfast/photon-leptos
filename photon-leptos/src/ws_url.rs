@@ -1,5 +1,23 @@
 //! Build WebSocket paths that carry an optional Photon subscribe key.
 
+/// Path (no query) and whether a `key` query parameter is present.
+///
+/// Use for logs — never emit the raw `?key=` value.
+#[must_use]
+pub fn ws_url_log_fields(url: &str) -> (&str, bool) {
+    let (path, query) = match url.split_once('?') {
+        Some((path, query)) => (path, Some(query)),
+        None => (url, None),
+    };
+    let has_key = query.is_some_and(|q| {
+        q.split('&').any(|pair| {
+            let name = pair.split('=').next().unwrap_or("");
+            name == "key"
+        })
+    });
+    (path, has_key)
+}
+
 /// Append `?key=` / `&key=` to a WebSocket path when a key filter is set.
 ///
 /// The server reads this query param and applies the auth + key policy.
@@ -84,5 +102,23 @@ mod tests {
             ws_url_with_key("/ws/x", Some("😀")),
             "/ws/x?key=%F0%9F%98%80"
         );
+    }
+
+    #[test]
+    fn log_fields_redact_key_value() {
+        let url = ws_url_with_key("/ws/notifications", Some("secret-partition"));
+        let (path, has_key) = ws_url_log_fields(&url);
+        assert_eq!(path, "/ws/notifications");
+        assert!(has_key);
+        assert!(!path.contains("secret"));
+        assert!(!path.contains("key="));
+
+        let (bare, no_key) = ws_url_log_fields("/ws/notifications");
+        assert_eq!(bare, "/ws/notifications");
+        assert!(!no_key);
+
+        let (with_other, keyed) = ws_url_log_fields("/ws/x?ns=w0&key=abc");
+        assert_eq!(with_other, "/ws/x");
+        assert!(keyed);
     }
 }

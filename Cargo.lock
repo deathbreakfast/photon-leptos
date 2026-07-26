@@ -1834,9 +1834,11 @@ dependencies = [
 name = "photon-leptos"
 version = "0.1.0"
 dependencies = [
+ "axum",
  "cfg-if",
  "codee",
  "futures",
+ "http",
  "leptos",
  "leptos-use",
  "photon-axum",
@@ -1845,6 +1847,7 @@ dependencies = [
  "serde_json",
  "thiserror 2.0.18",
  "tokio",
+ "tokio-tungstenite 0.26.2",
  "tracing",
  "uf-photon",
  "uf-quark",

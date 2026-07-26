@@ -53,7 +53,7 @@ photon-leptos **0.1 is experimental**. Treat the browser WebSocket as an ephemer
 
 There is no browser checkpoint or replay handshake. Across disconnect/reconnect, prefer Refetch when exact state matters. `BroadcastHub` is process-local (not multi-replica).
 
-**Host responsibilities:** authentication, WebSocket Origin policy (`HasPhoton::allow_ws_origin`), connection/group/rate limits, TLS, and graceful shutdown. Subscribe keys are UTF-8 (max 256 bytes); key-mismatch responses do not echo raw keys.
+**Host responsibilities:** authentication, WebSocket Origin policy (`HasPhoton::allow_ws_origin`; default denies all Origins), connection/group/rate limits, TLS, and graceful shutdown. Subscribe keys are UTF-8 (max 256 bytes, no control characters); key-mismatch responses do not echo raw keys.
 
 **Client observability:** `subscribe_ws` returns a [`PhotonWsHandle`](https://docs.rs/photon-leptos) with reactive status, `last_error`, and `close()`. `use_topic_subscription` exposes the same signals on `PhotonSubscription`.
 

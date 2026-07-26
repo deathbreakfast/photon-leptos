@@ -45,4 +45,8 @@ features = ["ssr", "hydrate"]
 all-features = true
 
 [dev-dependencies]
-tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+axum = { workspace = true }
+http = "1"
+photon = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "net", "time"] }
+tokio-tungstenite = { version = "0.26", default-features = false, features = ["connect"] }

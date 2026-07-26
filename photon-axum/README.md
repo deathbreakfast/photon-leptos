@@ -14,7 +14,7 @@ Axum WebSocket integration for Photon browser clients — boot-time route regist
            Arc::clone(&self.photon)
        }
 
-       // Cookie-auth hosts: reject disallowed Origins (default allows all).
+       // Production hosts MUST allowlist Origins (default denies all).
        // fn allow_ws_origin(&self, origin: Option<&str>) -> bool {
        //     origin == Some("https://app.example")
        // }
@@ -37,7 +37,7 @@ Axum WebSocket integration for Photon browser clients — boot-time route regist
 
 4. **Auth modes** — macro attribute `auth = "none"` vs `auth = "user"` selects [`WsAuthMode`](src/axum_ws/descriptor.rs). `none` allows an optional client `?key=`; `user` routes call `auth.user_key()` for partition filtering. Key-mismatch responses use a generic 403 body (raw keys are not reflected).
 
-5. **Origin and keys** — override [`HasPhoton::allow_ws_origin`](src/axum_ws/state.rs) for cookie-authenticated deployments. Subscribe keys must be valid UTF-8 after percent-decode and are capped at [`MAX_KEY_LEN`](src/axum_ws/ws_query.rs) (256 bytes); malformed encodings are rejected.
+5. **Origin and keys** — override [`HasPhoton::allow_ws_origin`](src/axum_ws/state.rs) for cookie-authenticated deployments (default denies every Origin). Subscribe keys must be valid UTF-8 after percent-decode, must not contain control characters (`\0`, `\r`, `\n`, …), and are capped at [`MAX_KEY_LEN`](src/axum_ws/ws_query.rs) (256 bytes); malformed encodings are rejected.
 
 6. **Host responsibilities** — enforce connection/group/rate limits, TLS, and shutdown outside this crate. Prefer [`SyncedWsConfig::try_new`](src/axum_ws/ws.rs) / [`WsFanoutMode::from_env`](src/axum_ws/ws.rs) which return [`FanoutConfigError`](src/axum_ws/ws.rs) on invalid `PHOTON_AXUM_WS_FANOUT`. Requesting `broadcast_hub` without `ws_hub()` returns **503** (no silent fallback).
 

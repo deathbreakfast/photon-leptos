@@ -21,13 +21,9 @@ Include:
 
 We will acknowledge receipt as soon as practical and coordinate a fix and disclosure timeline with you.
 
-## Threat model (bridge)
+## Production wiring
 
-photon-leptos / photon-axum expose Photon topics to browsers over WebSockets. The bridge does **not** replace host authentication, topic ACLs, or CSRF protection for server functions.
-
-Photon core threat model and broker/crypto checklist: see the **photon** repository `SECURITY.md`.
-
-## Production checklist for implementers
+photon-leptos / photon-axum expose Photon topics to browsers over WebSockets. Hosts still own authentication, topic ACLs, CSRF protection for server functions, TLS, and connection limits. Photon broker/crypto wiring lives in the **photon** repository `SECURITY.md`.
 
 ### WebSocket Origin (required)
 
@@ -50,14 +46,14 @@ impl HasPhoton for AppState {
 
 Forbidden Origin upgrades return **403** with a stable message (keys are not echoed).
 
-### Auth, cookies, and mutations
+### Auth, cookies, keys, and mutations
 
 | Check | How |
 |-------|-----|
 | `auth = "user"` routes | Implement `PhotonUserExtractor` from trusted session/JWT context |
 | Cookie flags | `Secure`, `HttpOnly`, `SameSite` on session cookies |
 | CSRF | Protect state-changing server functions; Origin alone is not a full CSRF strategy |
-| Key policy | Subscribe keys are UTF-8, max 256 bytes after percent-decode; mismatch responses do not echo raw keys |
+| Key policy | Subscribe keys are UTF-8, max 256 bytes after percent-decode, no control characters; mismatch responses do not echo raw keys |
 
 ### Demo and bench (do not deploy)
 
@@ -68,12 +64,6 @@ Forbidden Origin upgrades return **403** with a stable message (keys are not ech
 
 Both intentionally use insecure defaults (allow-all Origin, demo identity cookies, open bench data plane on loopback). They are CI / lab tools only.
 
-### Host edge still required
+### Host edge
 
 Authenticate and authorize before mounting Photon WS routes. Connection, group, and rate limits are host-owned. TLS termination is host/load-balancer owned.
-
-## Scope
-
-In scope: vulnerabilities in this repository's published crates and documentation that could cause unsafe production defaults, including WebSocket Origin handling, plus CI/supply-chain issues in this repository.
-
-Out of scope: vulnerabilities solely in third-party dependencies unless this project mishandles them in a security-relevant way; Photon core broker/crypto (documented in the photon repo).

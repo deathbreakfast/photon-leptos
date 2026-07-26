@@ -27,6 +27,7 @@ pub fn ensure_demo_bind_allowed(addr: SocketAddr) -> Result<(), String> {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
     use std::net::{IpAddr, Ipv4Addr};

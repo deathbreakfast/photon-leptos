@@ -12,7 +12,9 @@ Leptos client hooks and server re-exports for Photon realtime UI.
 
 Production hosts MUST implement `HasPhoton::allow_ws_origin` with an Origin
 allowlist before mounting WebSocket routes. The default rejects all origins;
-only demos and tests should explicitly opt into allow-all behavior.
+only demos and tests should explicitly opt into allow-all behavior. Subscribe
+keys must not contain control characters; client logs emit path + `has_key`
+only (never the `?key=` value).
 
 ## Status (0.1 experimental)
 

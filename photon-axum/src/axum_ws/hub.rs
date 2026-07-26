@@ -20,6 +20,8 @@ use tokio::sync::mpsc;
 use tokio::sync::mpsc::error::TrySendError;
 use tokio::task::JoinHandle;
 
+use super::ws_query::sanitize_key_for_ops_log;
+
 /// Default per-socket queue depth before a slow client is disconnected.
 pub const HUB_QUEUE_CAPACITY: usize = 64;
 
@@ -141,12 +143,13 @@ impl WsBroadcastHub {
                         reader,
                     },
                 );
+                let sub = sanitize_key_for_ops_log(key_filter.as_deref().unwrap_or(""));
                 log_ops(
                     "axum_ws_hub",
                     "group_start",
                     "broadcast hub group started",
                     &topic,
-                    key_filter.as_deref().unwrap_or(""),
+                    sub.as_ref(),
                     "",
                 );
             }
@@ -169,12 +172,13 @@ impl WsBroadcastHub {
         if group.members.is_empty() {
             if let Some(g) = inner.groups.remove(key) {
                 g.reader.abort();
+                let sub = sanitize_key_for_ops_log(key.key_filter.as_deref().unwrap_or(""));
                 log_ops(
                     "axum_ws_hub",
                     "group_stop",
                     "broadcast hub group stopped",
                     &key.topic,
-                    key.key_filter.as_deref().unwrap_or(""),
+                    sub.as_ref(),
                     "",
                 );
             }
@@ -192,12 +196,13 @@ impl WsBroadcastHub {
             if let Some(g) = inner.groups.remove(key) {
                 // Reader is exiting; drop the join handle without awaiting.
                 drop(g.reader);
+                let sub = sanitize_key_for_ops_log(key.key_filter.as_deref().unwrap_or(""));
                 log_ops(
                     "axum_ws_hub",
                     "group_stop",
                     "broadcast hub group stopped",
                     &key.topic,
-                    key.key_filter.as_deref().unwrap_or(""),
+                    sub.as_ref(),
                     "",
                 );
             }
@@ -313,12 +318,14 @@ async fn run_group_reader(
                     match tx.try_send(Arc::clone(&json)) {
                         Ok(()) => {}
                         Err(TrySendError::Full(_)) => {
+                            let sub =
+                                sanitize_key_for_ops_log(key.key_filter.as_deref().unwrap_or(""));
                             log_ops(
                                 "axum_ws_hub",
                                 "slow_client",
                                 "disconnecting slow WS client (queue full)",
                                 &key.topic,
-                                key.key_filter.as_deref().unwrap_or(""),
+                                sub.as_ref(),
                                 &id.to_string(),
                             );
                             drop_ids.push(*id);

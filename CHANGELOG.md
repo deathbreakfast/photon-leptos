@@ -43,6 +43,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `HasPhoton::allow_ws_origin` defaults to deny-all; inventory `ws_router` and macro manual handlers share the Origin gate.
 - E2E demo and bench server refuse non-loopback binds unless explicitly opted in (`PHOTON_LEPTOS_DEMO_ALLOW_INSECURE` / `PHOTON_LEPTOS_BENCH_ALLOW_NONLOCAL`).
 - Production implementer checklist expanded in [`SECURITY.md`](SECURITY.md).
+- Subscribe keys reject control characters (`\0`, `\r`, `\n`, …) after UTF-8/length checks; hub ops logs sanitize host-supplied keys.
+- Client `subscribe_ws` logs path + `has_key` only (never the `?key=` value).
+- Integration coverage for `#[synced]` codegen Origin deny-default → 403.
 
 ## [0.1.0] - 2026-07-19
 

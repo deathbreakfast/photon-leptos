@@ -1,5 +1,7 @@
 //! Extract optional subscribe key from a WebSocket upgrade request URI.
 
+use std::borrow::Cow;
+
 use axum::http::Uri;
 
 /// Query parameter name for the client subscribe key.
@@ -11,9 +13,10 @@ pub const MAX_KEY_LEN: usize = 256;
 /// Parse `?key=` (or `&key=`) from a request [`Uri`].
 ///
 /// Empty or missing values yield [`None`]. Malformed percent-encoding, invalid
-/// UTF-8 after decode, or keys longer than [`MAX_KEY_LEN`] are rejected as
-/// [`None`] (callers treat as absent / invalid — prefer failing auth over
-/// corrupting the partition key).
+/// UTF-8 after decode, keys longer than [`MAX_KEY_LEN`], or keys containing
+/// disallowed control characters (`\0`, `\r`, `\n`, and other Unicode controls)
+/// are rejected as [`None`] (callers treat as absent / invalid — prefer failing
+/// auth over corrupting the partition key).
 ///
 /// # Examples
 ///
@@ -43,9 +46,47 @@ pub fn client_key_from_uri(uri: &Uri) -> Option<String> {
         if decoded.len() > MAX_KEY_LEN {
             return None;
         }
+        if key_has_disallowed_control_chars(&decoded) {
+            return None;
+        }
         return Some(decoded);
     }
     None
+}
+
+/// Whether `key` contains characters that must not appear in subscribe keys.
+///
+/// Rejects NUL, CR, LF, and any other Unicode control character.
+#[must_use]
+pub fn key_has_disallowed_control_chars(key: &str) -> bool {
+    key.chars().any(is_disallowed_key_control)
+}
+
+/// Escape control characters in a subscribe key before placing it in ops logs.
+///
+/// Client keys are rejected at parse time; this still covers host-supplied
+/// `user_key` values and defense-in-depth for hub logging.
+#[must_use]
+pub fn sanitize_key_for_ops_log(key: &str) -> Cow<'_, str> {
+    if !key_has_disallowed_control_chars(key) {
+        return Cow::Borrowed(key);
+    }
+    Cow::Owned(
+        key.chars()
+            .map(|c| {
+                if is_disallowed_key_control(c) {
+                    '\u{FFFD}'
+                } else {
+                    c
+                }
+            })
+            .collect(),
+    )
+}
+
+fn is_disallowed_key_control(c: char) -> bool {
+    // Includes `\0`, `\r`, `\n`, and other Unicode controls.
+    c.is_control()
 }
 
 /// Decode a single `application/x-www-form-urlencoded` value to UTF-8.
@@ -171,5 +212,41 @@ mod tests {
         let exact = "a".repeat(MAX_KEY_LEN);
         let uri: Uri = format!("/ws/x?key={exact}").parse().unwrap();
         assert_eq!(client_key_from_uri(&uri).as_deref(), Some(exact.as_str()));
+    }
+
+    #[test]
+    fn rejects_nul_in_key() {
+        let uri: Uri = "/ws/x?key=a%00b".parse().unwrap();
+        assert_eq!(client_key_from_uri(&uri), None);
+    }
+
+    #[test]
+    fn rejects_cr_lf_in_key() {
+        let cr: Uri = "/ws/x?key=a%0Db".parse().unwrap();
+        assert_eq!(client_key_from_uri(&cr), None);
+        let lf: Uri = "/ws/x?key=a%0Ab".parse().unwrap();
+        assert_eq!(client_key_from_uri(&lf), None);
+        let crlf: Uri = "/ws/x?key=a%0D%0Ab".parse().unwrap();
+        assert_eq!(client_key_from_uri(&crlf), None);
+    }
+
+    #[test]
+    fn rejects_other_ascii_controls() {
+        // TAB
+        let tab: Uri = "/ws/x?key=a%09b".parse().unwrap();
+        assert_eq!(client_key_from_uri(&tab), None);
+        // BEL
+        let bel: Uri = "/ws/x?key=%07".parse().unwrap();
+        assert_eq!(client_key_from_uri(&bel), None);
+    }
+
+    #[test]
+    fn sanitize_ops_log_replaces_controls() {
+        let dirty = "user\nname\0";
+        let cleaned = sanitize_key_for_ops_log(dirty);
+        assert!(!cleaned.contains('\n'));
+        assert!(!cleaned.contains('\0'));
+        assert!(cleaned.contains('\u{FFFD}'));
+        assert_eq!(sanitize_key_for_ops_log("clean-key"), "clean-key");
     }
 }

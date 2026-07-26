@@ -49,7 +49,7 @@
 //! Uses `leptos_use::use_websocket` for connection management (reconnect,
 //! cleanup, protocol resolution).
 
-use crate::{ws_url_with_key, SyncedResourceOpts};
+use crate::{ws_url_log_fields, ws_url_with_key, SyncedResourceOpts};
 use codee::string::FromToStringCodec;
 use leptos::prelude::*;
 use leptos_use::core::ConnectionReadyState;
@@ -228,7 +228,12 @@ pub fn subscribe_ws(
     on_event: impl Fn(serde_json::Value) + Send + Sync + 'static,
 ) -> PhotonWsHandle {
     let url = ws_url_with_key(ws_path, key_filter);
-    tracing::info!(url = %url, "[photon-leptos] subscribing to WebSocket");
+    let (log_path, has_key) = ws_url_log_fields(&url);
+    tracing::info!(
+        ws_path = %log_path,
+        has_key,
+        "[photon-leptos] subscribing to WebSocket"
+    );
 
     let last_error = RwSignal::new(None::<String>);
     let last_error_for_cb = last_error;
@@ -239,10 +244,15 @@ pub fn subscribe_ws(
             .reconnect_limit(leptos_use::ReconnectLimit::Limited(u64::MAX))
             .reconnect_interval(3_000)
             .on_error({
-                let url = url.clone();
+                let log_path = log_path.to_owned();
                 move |err| {
                     let msg = format!("{err:?}");
-                    tracing::warn!(url = %url, error = %msg, "[photon-leptos] WebSocket error");
+                    tracing::warn!(
+                        ws_path = %log_path,
+                        has_key,
+                        error = %msg,
+                        "[photon-leptos] WebSocket error"
+                    );
                     last_error_for_cb.set(Some(msg));
                 }
             }),

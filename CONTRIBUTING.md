@@ -33,6 +33,10 @@ CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS=fallback \
   cargo dylint --all -p photon-leptos-e2e-demo --no-deps -- --features hydrate --target wasm32-unknown-unknown
 cargo audit
 cargo test -p photon-axum -p photon-leptos -p photon-leptos-macros -p photon-leptos-bench --features ssr
+# Security scenarios (included above):
+#   photon-axum: ws_query control-char reject; key_policy Origin probes
+#   photon-leptos: synced_origin_macro (real #[synced] handler → 403/101);
+#                  ws_url_log_fields redaction
 RUSTDOCFLAGS="-D warnings" cargo doc --workspace --all-features --no-deps
 cargo package -p photon-leptos-macros --list
 cargo package -p photon-axum --list

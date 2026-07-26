@@ -223,7 +223,7 @@ mod ws_url;
 pub use error::PhotonLeptosError;
 pub use opts::{SyncStrategy, SyncedResourceOpts};
 pub use photon_leptos_macros::synced;
-pub use ws_url::ws_url_with_key;
+pub use ws_url::{ws_url_log_fields, ws_url_with_key};
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "hydrate")] {
