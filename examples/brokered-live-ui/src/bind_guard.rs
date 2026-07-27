@@ -7,8 +7,6 @@ pub fn ensure_loopback_bind(addr: SocketAddr) -> Result<(), String> {
     if addr.ip().is_loopback() {
         Ok(())
     } else {
-        Err(format!(
-            "brokered-live-ui refuses non-loopback bind {addr}"
-        ))
+        Err(format!("brokered-live-ui refuses non-loopback bind {addr}"))
     }
 }

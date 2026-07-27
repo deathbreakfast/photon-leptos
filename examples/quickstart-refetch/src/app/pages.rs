@@ -122,10 +122,9 @@ fn AuthView(user: impl Fn() -> String + Send + Sync + Clone + 'static) -> impl I
 
     let trigger = crate::synced::subscribe_counter_get_auth(|| {});
     let counter = Resource::new(move || trigger.get(), move |_| counter_get_auth());
-    let partition = user_now.clone();
 
     let on_increment = move |_| {
-        let p = partition.clone();
+        let p = user_now.clone();
         leptos::task::spawn_local(async move {
             let _ = increment_partition(p).await;
         });
@@ -163,10 +162,9 @@ fn KeyView(key: impl Fn() -> String + Send + Sync + Clone + 'static) -> impl Int
         );
     }
     let counter = Resource::new(move || trigger.get(), move |_| counter_get_keyed());
-    let partition = key_now.clone();
 
     let on_increment = move |_| {
-        let p = partition.clone();
+        let p = key_now.clone();
         leptos::task::spawn_local(async move {
             let _ = increment_partition(p).await;
         });

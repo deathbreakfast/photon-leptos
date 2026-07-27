@@ -58,9 +58,7 @@ fn AppendSection() -> impl IntoView {
     #[cfg(feature = "hydrate")]
     let resource = crate::synced::use_append_log_get();
     #[cfg(not(feature = "hydrate"))]
-    let resource = Resource::new(|| (), async |_| {
-        Some(crate::synced::append_log_get().await)
-    });
+    let resource = Resource::new(|| (), async |_| Some(crate::synced::append_log_get().await));
 
     let draft = RwSignal::new("hello".to_string());
 

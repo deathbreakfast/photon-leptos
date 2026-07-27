@@ -33,8 +33,7 @@ async fn user_from_request() -> Result<String, ServerFnError> {
     let headers: HeaderMap = leptos_axum::extract()
         .await
         .map_err(|e| ServerFnError::new(e.to_string()))?;
-    cookie_value(&headers, SESSION_COOKIE)
-        .ok_or_else(|| ServerFnError::new("not signed in"))
+    cookie_value(&headers, SESSION_COOKIE).ok_or_else(|| ServerFnError::new("not signed in"))
 }
 
 #[server]

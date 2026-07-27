@@ -3,12 +3,12 @@
 use std::sync::Arc;
 
 use axum::Router;
+use brokered_live_ui::photon_boot::{build_photon_nats, NatsBootOutcome};
+use brokered_live_ui::{ensure_loopback_bind, shell, App, AppState, CounterStore};
 use leptos::config::get_configuration;
 use leptos::prelude::*;
 use leptos_axum::{file_and_error_handler, generate_route_list, LeptosRoutes};
 use photon_axum::{ws_router, HeadlessWsAuth};
-use brokered_live_ui::photon_boot::{build_photon_nats, NatsBootOutcome};
-use brokered_live_ui::{ensure_loopback_bind, shell, App, AppState, CounterStore};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

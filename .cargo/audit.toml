@@ -1,0 +1,10 @@
+# Transitive rustls-webpki 0.102 via crates.io photon-backend-nats → async-nats 0.38.
+# Cleared when photon-backend-nats is republished on async-nats >= 0.50.
+# Cannot git-patch photon-backend-nats alone: main nats needs unpublished PhotonError::caused.
+[advisories]
+ignore = [
+    "RUSTSEC-2026-0049",
+    "RUSTSEC-2026-0098",
+    "RUSTSEC-2026-0099",
+    "RUSTSEC-2026-0104",
+]
