@@ -55,14 +55,15 @@ Forbidden Origin upgrades return **403** with a stable message (keys are not ech
 | CSRF | Protect state-changing server functions; Origin alone is not a full CSRF strategy |
 | Key policy | Subscribe keys are UTF-8, max 256 bytes after percent-decode, no control characters; mismatch responses do not echo raw keys |
 
-### Demo and bench (do not deploy)
+### Demo, examples, and bench (do not deploy)
 
 | Binary | Guard |
 |--------|-------|
+| `examples/*` teaching hosts | Loopback-only bind; quickstart / replace / brokered use allow-all Origin for teaching — copy **`secure-refetch-host`** for production Origin + session |
 | `e2e/demo` | Refuses non-loopback bind unless `PHOTON_LEPTOS_DEMO_ALLOW_INSECURE=1` |
 | `photon-leptos-bench` server | Refuses non-loopback bind unless `PHOTON_LEPTOS_BENCH_ALLOW_NONLOCAL=1` |
 
-Both intentionally use insecure defaults (allow-all Origin, demo identity cookies, open bench data plane on loopback). They are CI / lab tools only.
+`e2e/demo` and bench intentionally use insecure defaults (allow-all Origin, demo identity cookies, open bench data plane on loopback). They are CI / lab tools only — not developer demos (see [`examples/`](examples/)).
 
 ### Host edge
 

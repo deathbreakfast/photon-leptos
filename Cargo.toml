@@ -6,6 +6,10 @@ members = [
     "photon-leptos-macros",
     "e2e/demo",
     "photon-leptos-bench",
+    "examples/quickstart-refetch",
+    "examples/secure-refetch-host",
+    "examples/replace-and-append-demo",
+    "examples/brokered-live-ui",
 ]
 [[workspace.metadata.leptos]]
 name = "photon-leptos-e2e"
@@ -17,6 +21,50 @@ end2end-dir = "e2e/tests"
 end2end-cmd = "npx playwright test"
 site-addr = "127.0.0.1:3000"
 reload-port = 3001
+bin-features = ["ssr"]
+lib-features = ["hydrate"]
+
+[[workspace.metadata.leptos]]
+name = "quickstart-refetch"
+bin-package = "quickstart-refetch"
+lib-package = "quickstart-refetch"
+site-root = "examples/quickstart-refetch/site"
+site-pkg-dir = "pkg"
+site-addr = "127.0.0.1:3020"
+reload-port = 3025
+bin-features = ["ssr"]
+lib-features = ["hydrate"]
+
+[[workspace.metadata.leptos]]
+name = "secure-refetch-host"
+bin-package = "secure-refetch-host"
+lib-package = "secure-refetch-host"
+site-root = "examples/secure-refetch-host/site"
+site-pkg-dir = "pkg"
+site-addr = "127.0.0.1:3021"
+reload-port = 3026
+bin-features = ["ssr"]
+lib-features = ["hydrate"]
+
+[[workspace.metadata.leptos]]
+name = "replace-and-append-demo"
+bin-package = "replace-and-append-demo"
+lib-package = "replace-and-append-demo"
+site-root = "examples/replace-and-append-demo/site"
+site-pkg-dir = "pkg"
+site-addr = "127.0.0.1:3022"
+reload-port = 3027
+bin-features = ["ssr"]
+lib-features = ["hydrate"]
+
+[[workspace.metadata.leptos]]
+name = "brokered-live-ui"
+bin-package = "brokered-live-ui"
+lib-package = "brokered-live-ui"
+site-root = "examples/brokered-live-ui/site"
+site-pkg-dir = "pkg"
+site-addr = "127.0.0.1:3023"
+reload-port = 3028
 bin-features = ["ssr"]
 lib-features = ["hydrate"]
 

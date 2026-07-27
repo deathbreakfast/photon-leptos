@@ -1,6 +1,8 @@
 # photon-leptos E2E
 
-**Status:** implemented — browser tests under `e2e/tests/` exercise a minimal Leptos + Axum demo in `e2e/demo/`.
+**Status:** implemented — browser tests under `e2e/tests/` exercise a minimal Leptos + Axum harness in `e2e/demo/`.
+
+For **developer demos** (copy-paste teaching hosts), see [`examples/`](../examples/) — `e2e/demo` is not a demo.
 
 ## Goal
 

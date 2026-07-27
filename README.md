@@ -109,6 +109,7 @@ Client-initiated writes can also publish the same topic; the diagram highlights 
 
 ## Documentation
 
+- **Examples** — [`examples/README.md`](examples/README.md) (teaching hosts; start with `quickstart-refetch`)
 - **Architecture and API** — [docs.rs/photon-leptos](https://docs.rs/photon-leptos) (primary reference)
 - **Axum boot** — [`photon-axum/README.md`](photon-axum/README.md) · [docs.rs/photon-axum](https://docs.rs/photon-axum) · `ws_router` · `HasPhoton` on your app state
 - **Macro reference** — [docs.rs/photon-leptos-macros](https://docs.rs/photon-leptos-macros)
@@ -132,6 +133,22 @@ photon-axum = { version = "0.1", features = ["ssr"] }
 
 Photon boot (`PhotonBuilder` + in-process `mem` storage) lives in the [photon README](https://github.com/unified-field-dev/photon/blob/main/README.md#getting-started).
 
+## How to run examples
+
+Copy-paste teaching hosts live under [`examples/`](examples/) (not `e2e/demo`). Full ladder: [`examples/README.md`](examples/README.md).
+
+```bash
+export PHOTON_TRANSPORT_KEY=cGhvdG9uLWRldi10cmFuc3BvcnQta2V5LTMyYnl0ZXM=
+cargo leptos watch --split --project quickstart-refetch   # http://127.0.0.1:3020/
+```
+
+| Example | When you'd open it | Success signal |
+|---------|-------------------|----------------|
+| [`quickstart-refetch`](examples/quickstart-refetch/) | First demo — mem + WS refetch, auth/key, status/close | Increment updates; Status `Open` |
+| [`secure-refetch-host`](examples/secure-refetch-host/) | Origin allowlist + session extractor | Sign in → scoped Increment syncs |
+| [`replace-and-append-demo`](examples/replace-and-append-demo/) | Replace / Append strategies | Snapshot / list update from payload |
+| [`brokered-live-ui`](examples/brokered-live-ui/) | NATS-backed Photon under Leptos | Counter updates; skips if no `PHOTON_NATS_URL` |
+
 ## FAQ
 
 **Why does `#[photon::synced]` fail to compile?** The **photon** crate compile-errors that macro by design. Use `#[photon_leptos::synced]` from this repo (re-exported as `photon_leptos::synced`).
@@ -148,18 +165,20 @@ Photon boot (`PhotonBuilder` + in-process `mem` storage) lives in the [photon RE
 
 **SSR vs hydrate?** On SSR-only builds, `subscribe_*` compiles out the WebSocket connection; the trigger stays at 0 and the initial value comes from the `Resource` alone.
 
-## Integrator reference vs browser E2E
+## Developer examples vs browser E2E
 
-Two surfaces under [`e2e/`](e2e/) serve different goals:
+| Surface | Role |
+|---------|------|
+| **[`examples/`](examples/)** | Copy-paste teaching hosts (`cargo leptos watch --split --project …`) — start here |
+| **`e2e/demo/`** | Playwright integrator harness (insecure defaults) — **not** a developer demo |
+| **`e2e/tests/`** | Browser CI runner |
 
-| Surface | When you'd open it | Command |
-|---------|-------------------|---------|
-| **`e2e/demo/`** — Leptos + Axum integrator reference | Wiring `#[photon_leptos::synced]`, `ws_router`, auth/key isolation, and publish→refetch in a real host layout | Read sources + run locally with `cargo leptos watch -p photon-leptos-e2e` (see [`e2e/README.md`](e2e/README.md)) |
-| **`e2e/tests/`** — Playwright browser runner | Proving publish → WebSocket → Leptos refetch (happy/sad/keyed paths) in CI or before a release | `cd e2e/tests && npm ci && npx playwright install --with-deps` then `cargo leptos end-to-end --project photon-leptos-e2e` from workspace root |
+```bash
+cd e2e/tests && npm ci && npx playwright install --with-deps
+cargo leptos end-to-end --project photon-leptos-e2e   # from workspace root
+```
 
-The demo is **not** part of the library crate API — it uses insecure defaults (allow-all Origin, cookie identity) for testability. Copy patterns, not the security posture. Requires `PHOTON_TRANSPORT_KEY` (see [`e2e/README.md`](e2e/README.md)).
-
-CI runs the browser runner on every push and PR (chromium, firefox, webkit) via the `e2e` job in [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
+Requires `PHOTON_TRANSPORT_KEY` (see [`e2e/README.md`](e2e/README.md)). CI runs the browser runner on every push and PR via [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
 ## Verify
 
