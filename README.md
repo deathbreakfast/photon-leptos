@@ -148,16 +148,18 @@ Photon boot (`PhotonBuilder` + in-process `mem` storage) lives in the [photon RE
 
 **SSR vs hydrate?** On SSR-only builds, `subscribe_*` compiles out the WebSocket connection; the trigger stays at 0 and the initial value comes from the `Resource` alone.
 
-## E2E
+## Integrator reference vs browser E2E
 
-A self-contained counter demo and Playwright harness live under [`e2e/`](e2e/README.md). Run browser tests from the workspace root:
+Two surfaces under [`e2e/`](e2e/) serve different goals:
 
-```bash
-cd e2e/tests && npm ci && npx playwright install --with-deps
-cargo leptos end-to-end --project photon-leptos-e2e
-```
+| Surface | When you'd open it | Command |
+|---------|-------------------|---------|
+| **`e2e/demo/`** — Leptos + Axum integrator reference | Wiring `#[photon_leptos::synced]`, `ws_router`, auth/key isolation, and publish→refetch in a real host layout | Read sources + run locally with `cargo leptos watch -p photon-leptos-e2e` (see [`e2e/README.md`](e2e/README.md)) |
+| **`e2e/tests/`** — Playwright browser runner | Proving publish → WebSocket → Leptos refetch (happy/sad/keyed paths) in CI or before a release | `cd e2e/tests && npm ci && npx playwright install --with-deps` then `cargo leptos end-to-end --project photon-leptos-e2e` from workspace root |
 
-The demo is not part of the library crate API. CI runs browser E2E on every push and PR (chromium, firefox, webkit) via the `e2e` job in [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
+The demo is **not** part of the library crate API — it uses insecure defaults (allow-all Origin, cookie identity) for testability. Copy patterns, not the security posture. Requires `PHOTON_TRANSPORT_KEY` (see [`e2e/README.md`](e2e/README.md)).
+
+CI runs the browser runner on every push and PR (chromium, firefox, webkit) via the `e2e` job in [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
 ## Verify
 
