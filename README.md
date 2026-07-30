@@ -1,15 +1,9 @@
 # photon-leptos
 
 [![CI](https://github.com/unified-field-dev/photon-leptos/actions/workflows/ci.yml/badge.svg)](https://github.com/unified-field-dev/photon-leptos/actions/workflows/ci.yml)
-[![crates.io](https://img.shields.io/crates/v/photon-leptos.svg)](https://crates.io/crates/photon-leptos)
-[![docs.rs](https://docs.rs/photon-leptos/badge.svg)](https://docs.rs/photon-leptos)
-[![crates.io](https://img.shields.io/crates/v/photon-axum.svg)](https://crates.io/crates/photon-axum)
-[![docs.rs](https://docs.rs/photon-axum/badge.svg)](https://docs.rs/photon-axum)
-[![crates.io](https://img.shields.io/crates/v/photon-leptos-macros.svg)](https://crates.io/crates/photon-leptos-macros)
-[![docs.rs](https://docs.rs/photon-leptos-macros/badge.svg)](https://docs.rs/photon-leptos-macros)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-[GitHub](https://github.com/unified-field-dev/photon-leptos) · [photon](https://github.com/unified-field-dev/photon) · [docs.rs](https://docs.rs/photon-leptos)
+[GitHub](https://github.com/unified-field-dev/photon-leptos) · [photon](https://github.com/unified-field-dev/photon) · `cargo doc -p photon-leptos --open`
 
 Leptos + Axum integration built on [photon](https://github.com/unified-field-dev/photon) — browser clients subscribe to topics over WebSockets and refetch synced server functions when events arrive.
 
@@ -29,7 +23,7 @@ pub struct NotificationUpdated { /* ... */ }
 )]
 pub async fn list_notifications() -> Result<Vec<Notification>, ServerFnError> { /* ... */ }
 
-// Somewhere else on the server — not the viewing client's click:
+// Somewhere else on the server (for example after an import job finishes):
 async fn on_import_job_finished(...) {
     NotificationUpdated { /* ... */ }.publish().await?;
 }
@@ -49,9 +43,9 @@ photon-leptos **0.1 is experimental**. Treat the browser WebSocket as an ephemer
 |----------|--------|
 | **Refetch** | Supported — server function remains the authoritative source of state |
 | **Replace** | Experimental — event payload must deserialize as the success value (`T` or `Ok` of `Result<T, E>`); the macro calls `synced_resource_replace_result` for `Result` return types |
-| **Append** | Best-effort live tail — buffers events during initial load; **no** cursor, dedupe, or reconnect replay |
+| **Append** | Best-effort live tail — buffers events during initial load; treats the socket as an ephemeral stream (Refetch after reconnect when the full list must match the server) |
 
-There is no browser checkpoint or replay handshake. Across disconnect/reconnect, prefer Refetch when exact state matters. `BroadcastHub` is process-local (not multi-replica).
+Browser WebSocket is an ephemeral invalidation / live-update channel (no durable client checkpoint). Across disconnect/reconnect, prefer Refetch when exact state matters. `BroadcastHub` is process-local (not multi-replica).
 
 **Host responsibilities:** authentication, WebSocket Origin policy (`HasPhoton::allow_ws_origin`; default denies all Origins), connection/group/rate limits, TLS, and graceful shutdown. Subscribe keys are UTF-8 (max 256 bytes, no control characters); key-mismatch responses do not echo raw keys.
 
@@ -61,7 +55,7 @@ There is no browser checkpoint or replay handshake. Across disconnect/reconnect,
 
 photon-leptos bridges Photon pub/sub events to Leptos UIs over WebSockets. You define topics and publish from server code with **photon**; you annotate read server functions with **`#[photon_leptos::synced]`** to get client subscription helpers and automatic WS route registration; you merge **`photon_axum::ws_router`** once at host boot.
 
-`#[photon::topic]` and `#[photon::subscribe]` live in the **photon** crate. Core **photon** deliberately has no browser client wiring — `#[photon::synced]` compile-errors there by design.
+`#[photon::topic]` and `#[photon::subscribe]` live in the **photon** crate. Browser client wiring and `#[photon_leptos::synced]` live here — core **photon** rejects `#[photon::synced]` so the UI path stays in this kit.
 
 ## The model
 
@@ -116,20 +110,21 @@ Client-initiated writes can also publish the same topic; the diagram highlights 
 
 ## Getting started
 
-Add the crates from crates.io:
+Add the crates from crates.io (published line is `0.1.0`; this workspace may be
+ahead on `main` — use git if you need unreleased fixes):
 
 ```toml
 [dependencies]
 photon = { package = "uf-photon", version = "0.1", features = ["runtime", "mem"] }
 photon-leptos = { version = "0.1", features = ["hydrate", "ssr"] }
-photon-axum = { version = "0.1", features = ["ssr"] }
+photon-axum = { version = "0.1", features = ["runtime"] }
 ```
 
 **Features:**
 
 - `photon-leptos/hydrate` — client WebSocket subscription helpers (enable on WASM/client builds)
-- `photon-leptos/ssr` — server WS route registration via `photon-axum`
-- `photon-axum/ssr` — Axum WS handler crate (required for `ws_router`)
+- `photon-leptos/ssr` — Leptos SSR + server WS route registration via `photon-axum`
+- `photon-axum/runtime` — Axum WS handler crate (required for `ws_router`; non-Leptos server feature)
 
 Photon boot (`PhotonBuilder` + in-process `mem` storage) lives in the [photon README](https://github.com/unified-field-dev/photon/blob/main/README.md#getting-started).
 
@@ -186,7 +181,7 @@ CI runs on every push and PR ([`.github/workflows/ci.yml`](.github/workflows/ci.
 
 ```bash
 cargo fmt --all -- --check
-cargo clippy --workspace --all-targets --features ssr -- -D warnings
+cargo clippy --workspace --all-targets --all-features -- -D warnings
 # Requires: cargo install cargo-dylint --locked --version 6.0.1
 #           cargo install dylint-link --locked --version 6.0.1
 CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS=fallback \
@@ -194,7 +189,7 @@ CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS=fallback \
 CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS=fallback \
   cargo dylint --all -p photon-leptos-e2e-demo --no-deps -- --features hydrate --target wasm32-unknown-unknown
 cargo audit
-cargo test -p photon-axum -p photon-leptos -p photon-leptos-macros -p photon-leptos-bench --features ssr
+cargo test -p photon-axum -p photon-leptos -p photon-leptos-macros -p photon-leptos-bench --all-features
 RUSTDOCFLAGS="-D warnings" cargo doc --workspace --all-features --no-deps
 cargo package -p photon-leptos-macros --list
 cargo package -p photon-axum --list

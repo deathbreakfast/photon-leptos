@@ -35,7 +35,7 @@ ssr = [
     "dep:photon",
     "dep:photon-axum",
     "photon/runtime",
-    "photon-axum/ssr",
+    "photon-axum/runtime",
     "dep:tokio",
     "dep:quark",
 ]

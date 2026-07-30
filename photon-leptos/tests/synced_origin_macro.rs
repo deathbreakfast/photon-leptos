@@ -1,6 +1,7 @@
 //! Origin gate on real `#[synced]` codegen (not a hand-mirrored probe).
 
 #![cfg(feature = "ssr")]
+#![allow(missing_docs)]
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
 use std::sync::Arc;
@@ -8,6 +9,7 @@ use std::time::Duration;
 
 use axum::Router;
 use http::StatusCode;
+use leptos::prelude::Update;
 use photon::Photon;
 use photon_leptos::server::HasPhoton;
 use photon_leptos::synced;

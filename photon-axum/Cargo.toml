@@ -21,10 +21,11 @@ tokio = { workspace = true, optional = true }
 
 [features]
 default = []
-ssr = ["photon-runtime/runtime", "photon-backend/runtime", "dep:tokio"]
+# Non-Leptos server/runtime feature (Axum WS + Photon runtime deps).
+runtime = ["photon-runtime/runtime", "photon-backend/runtime", "dep:tokio"]
 
 [package.metadata.docs.rs]
-features = ["ssr"]
+features = ["runtime"]
 all-features = true
 
 [dev-dependencies]
