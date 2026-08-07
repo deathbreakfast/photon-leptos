@@ -184,8 +184,8 @@
   },
   "amis": {
     "us-west-2": {
-      "ubuntu-24.04-x86": "ami-PLACEHOLDER-x86",
-      "ubuntu-24.04-arm": "ami-PLACEHOLDER-arm"
+      "ubuntu-24.04-x86": "ami-00000000000000000",
+      "ubuntu-24.04-arm": "ami-00000000000000000"
     }
   }
 }

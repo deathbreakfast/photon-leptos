@@ -107,6 +107,7 @@ libraries = [{ git = "https://github.com/leptos-rs/leptos-lints", tag = "v0.1.2"
 
 [workspace.dependencies]
 quark = { package = "uf-quark", version = "0.1.1" }
+# Match upstream/CI: crates.io photon 0.1.1 (monorepo path pins fight photon-testkit patches).
 photon-runtime = { version = "=0.1.1", default-features = false, features = ["runtime", "mem"] }
 photon-backend = { version = "=0.1.1", default-features = false, features = ["runtime", "mem"] }
 photon = { package = "uf-photon", version = "=0.1.1", default-features = false, features = ["runtime", "mem"] }
