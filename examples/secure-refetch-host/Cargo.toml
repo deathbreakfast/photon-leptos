@@ -1,6 +1,6 @@
 [package]
 name = "secure-refetch-host"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 publish = false
 description = "Production-shaped Origin allowlist + session extractor teaching host"
