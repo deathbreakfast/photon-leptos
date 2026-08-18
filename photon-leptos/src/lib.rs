@@ -160,12 +160,18 @@
 //! production hosts must also implement an Origin allowlist because the default
 //! rejects all WebSocket origins.
 //!
+//! Set `PHOTON_TRANSPORT_KEY` (base64-encoded 32-byte transport key) before building Photon
+//! when fail-closed crypto is enabled (Photon 0.1.1+). See the repository README and
+//! `e2e/README.md` for dev values.
+//!
 //! ```rust,ignore
 //! use std::sync::Arc;
 //!
 //! use axum::Router;
 //! use photon::Photon;
 //! use photon_axum::{HasPhoton, HeadlessWsAuth, ws_router};
+//!
+//! // std::env::set_var("PHOTON_TRANSPORT_KEY", "…");
 //!
 //! #[derive(Clone)]
 //! struct AppState {

@@ -83,6 +83,6 @@ replacement group created under the same key.
 
 | Feature | Purpose |
 |---------|---------|
-| `ssr` | Enable Axum WS handlers (required) |
+| `runtime` | Enable Axum WS handlers (required) |
 
 Depends on [`photon-runtime`](https://github.com/unified-field-dev/photon) from crates.io via the workspace.

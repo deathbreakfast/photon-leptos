@@ -163,8 +163,10 @@ impl SyncedWsConfig {
 
 /// Upgrade handler: subscribe to `config.topic` and forward serialized events.
 ///
-/// When `config.fanout` is [`WsFanoutMode::BroadcastHub`], `hub` must be `Some`
-/// or the connection is closed without falling back to per-subscribe.
+/// When `config.fanout` is [`WsFanoutMode::BroadcastHub`], `hub` must be `Some`. If it is
+/// `None`, this handler responds with **503 Service Unavailable** and the
+/// [`FanoutConfigError::HubRequiredButMissing`] message rather than falling back to
+/// per-subscribe fanout.
 pub async fn synced_ws_handler(
     ws: WebSocketUpgrade,
     photon: Arc<Photon>,
