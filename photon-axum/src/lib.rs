@@ -2,19 +2,31 @@
 //!
 //! Bridges Photon topic streams to browser WebSockets. Routes annotated with
 //! [`photon_leptos::synced`](https://docs.rs/photon_leptos_macros) submit [`WsRouteDescriptor`]
-//! entries via inventory; [`ws_router`] discovers them at boot and mounts GET handlers.
+//! entries via inventory; [`ws_router`] discovers them once at host boot and mounts
+//! GET handlers so browsers can subscribe.
+//!
+//! Integrators usually depend on `photon-leptos` with `ssr` and follow that crate’s
+//! [Mount WS routes](https://docs.rs/photon_leptos/latest/photon_leptos/index.html#boot-ws-routes)
+//! and [User-auth WebSocket](https://docs.rs/photon_leptos/latest/photon_leptos/index.html#user-auth-ws)
+//! guides. This crate is the Axum implementation those re-exports point at.
 //!
 //! ## Boot checklist
+//!
+//! Context: call these steps during host startup, after Photon is built and before
+//! serving traffic.
 //!
 //! 1. App state implements [`HasPhoton`] with `Arc<photon::Photon>`.
 //! 2. App state overrides [`HasPhoton::allow_ws_origin`] with a production Origin
 //!    allowlist. The default rejects every origin.
 //! 3. Binary links crates that use `#[photon_leptos::synced]` (inventory submit).
-//! 4. Call [`ws_router`]::<`S`, `Auth`>(app) before serving.
+//! 4. Call [`ws_router`]::<`S`, `Auth`>(app) before serving. For `auth = "user"`
+//!    routes, `Auth` implements [`PhotonUserExtractor`] so when the request opens
+//!    the WebSocket the host can bind the subscribe key.
 //!
 //! ```rust,ignore
-//! use photon_axum::{HeadlessWsAuth, ws_router};
+//! use photon_axum::{HeadlessWsAuth, HasPhoton, ws_router};
 //!
+//! // At host boot:
 //! let app = ws_router::<AppState, HeadlessWsAuth>(router);
 //! ```
 //!
