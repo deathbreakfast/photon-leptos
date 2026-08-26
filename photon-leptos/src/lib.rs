@@ -11,7 +11,7 @@
 //!
 //! - **Synced refetch** — Wires a Leptos `Resource` to a Photon topic so the UI
 //!   re-calls the server function when an event arrives. [Get started](#synced-refetch)
-//! - **Mount WS routes** — Registers inventory WebSocket handlers on the Axum router
+//! - **Inventory WebSocket routes** — Registers inventory WebSocket handlers on the Axum router
 //!   once at host boot so browsers can subscribe. [Get started](#boot-ws-routes)
 //! - **Replace and Append** — Updates UI from the WebSocket payload (replace) or
 //!   appends to a live list (append) when refetch is the wrong fit.
