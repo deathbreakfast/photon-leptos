@@ -102,6 +102,15 @@ impl KeyResolveError {
 /// Resolve the Photon `key_filter` for a WS upgrade.
 ///
 /// See the module-level policy table and examples.
+///
+/// # Errors
+///
+/// Returns [`KeyResolveError::MissingUser`] when `auth_mode` is [`WsAuthMode::User`] and
+/// `user_key` is absent or empty.
+///
+/// Returns [`KeyResolveError::KeyMismatch`] when the client supplies a `?key=` query value that
+/// does not equal the authenticated user key. HTTP handlers should map both cases to a generic
+/// 403 via [`KeyResolveError::client_message`] (raw keys are never reflected).
 pub fn resolve_subscribe_key(
     auth_mode: WsAuthMode,
     user_key: Option<&str>,

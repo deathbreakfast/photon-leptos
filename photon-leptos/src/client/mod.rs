@@ -1,7 +1,10 @@
 //! Client-side synced resources and WebSocket lifecycle.
 //!
 //! Helpers for Leptos components that subscribe to Photon topics over WebSocket and
-//! keep [`Resource`] data fresh when events arrive.
+//! keep [`Resource`] data fresh when events arrive. Prefer the crate-root guides
+//! ([Synced refetch](crate#synced-refetch), [Replace and Append](crate#replace-and-append),
+//! [Shared subscription](crate#shared-subscription)) for first success; this module
+//! documents strategy choice and API tiers for readers who land on item rustdoc.
 //!
 //! ## Choosing a sync strategy
 //!
