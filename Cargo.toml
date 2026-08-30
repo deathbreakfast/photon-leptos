@@ -134,8 +134,3 @@ tower-http = { version = "0.6", features = ["fs"] }
 
 # photon-testkit is unpublished; git tag pulls workspace path crates that would
 # duplicate crates.io photon-runtime. Force those onto the registry builds.
-[patch."https://github.com/unified-field-dev/photon.git"]
-photon-runtime = { git = "https://github.com/unified-field-dev/photon", branch = "main" }
-photon-backend = { git = "https://github.com/unified-field-dev/photon", branch = "main" }
-photon-telemetry = { git = "https://github.com/unified-field-dev/photon", branch = "main" }
-uf-photon-core = { git = "https://github.com/unified-field-dev/photon", branch = "main" }
